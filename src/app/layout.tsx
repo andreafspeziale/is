@@ -24,6 +24,11 @@ export const metadata: Metadata = {
     siteName: "Andrea F. Speziale",
     locale: "en_US",
     type: "website",
+    images: [
+      {
+        url: "https://www.andreafspeziale.is/og/home",
+      },
+    ],
   },
   robots: {
     index: true,
