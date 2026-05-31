@@ -1,0 +1,166 @@
+---
+title: "It's not a ghost. Rust ownership"
+description: "I don't know if I wrote a Rust introduction or a love letter to Interstellar. And at this point, I'm too afraid to ask."
+date: "November 18, 2024"
+---
+
+When I learn something new and I want to "save it" in my brain, I need to be able to explain it or at least create something tangible with it.
+
+In this article I'm writing about memory and how it is managed, but it won't deal with human memory. My goal is to make it easier to understand how **Rust**, one of the most trending programming language, deals with machine memory.
+
+Rust as a programming language is somewhere in between:
+
+- Low level. You'll need to manage memory manually (e.g in C you can use [malloc and free](https://en.wikipedia.org/wiki/C_dynamic_memory_allocation));
+- High level. Memory is automatically allocated and [trash](https://x.com/trashh_dev) is taken out from time to time by someone else ([gc](https://en.wikipedia.org/wiki/Garbage_collection_(computer_science))).
+
+> So if I'm not required to manually manage memory and no one is going to do it, how does it work?
+
+[Please welcome to the stage Mr. Christopher Nol](https://www.youtube.com/watch?v=Xcrzlk5nRUA)... Sorry, **Ownership**.
+
+Now you're back from C.N. astonishing shots and before rushing into ownership concepts, let's see a couple of Rust's data types, how they are represented and allocated into memory.
+
+```rust
+fn main() {
+    let greet = String::from("hi");
+    let count = 10;
+}
+```
+
+- The `greet` variable seems just a `String`, but in Rust strings are vectors with some extra guarantees, restrictions and capabilities. A vector or `Vec<T>` is a *dynamic size* data collection;
+- The `count` variable is not using any constructor or type annotation, so it will be an `i32` by design. An `i32` is a *fixed size* data type, specifically 32-bit signed integer.
+
+The *dynamic* and *fixed size* nature of the two variables helps us understand how they are allocated into memory:
+
+> *What's dynamic will be allocated in both the **Stack** and the **Heap** memory portion, linked by a (smart) pointer. What's fixed will be allocated only in the **Stack** memory portion.*
+
+<img src="/blog/rust-ownership/2.webp" alt="Stack and Heap memory allocation" style={{maxWidth: '680px', width: '100%'}} />
+
+Now we're ready to address Rust **ownership**.
+
+It's a set of rules verified by the Rust compiler which ensures memory correctness and efficiency usage:
+
+- Every value in your program has an owner;
+- Every value in your program has exclusively one owner at any moment in time.
+
+In the example above the `count` variable is the **owner** of the value of `10`.
+
+> *But our programs are not made by just two lines of code; how can the ownership be exclusive at any time of the code execution?*
+
+The ownership can be transferred or borrowed.
+
+## Value access and ownership transfer
+
+Let's consider the following example:
+
+```rust
+fn main() {
+    let first_counter = 10;
+    let second_counter = first_counter;
+
+    // ✓ compiles successfully
+    println!("first_counter: {}", first_counter);
+    println!("second_counter: {}", second_counter);
+}
+```
+
+In this scenario we're dealing with two `i32` fixed size variables. Both will be allocated in the stack and there are no pointers or references to the heap involved.
+
+> `first_counter` *is the **owner** of the numeric **value** of* `10` *, but what is owning the* `second_counter` *variable?* `first_counter` *?*
+
+Nope, `second_counter` is the **owner** of **another** numeric **value** of `10`.
+
+The compiler is not dealing with any *dynamic size* variable, including pointers or references: it will just **copy** the **value of** `10` in the stack giving `second_counter` ownership.
+
+<img src="/blog/rust-ownership/4.webp" alt="Stack copy for fixed size types" style={{maxWidth: '680px', width: '100%'}} />
+
+`first_counter` and `second_counter` are distinct variables, so the `println!` function can correctly access their values.
+
+> *What happens in case of* dynamic size *variables instead? Something which deals with pointers, something like strings.*
+
+If strings behave the same, we would find ourselves in a situation like this:
+
+<img src="/blog/rust-ownership/5.webp" alt="Two pointers to same heap - unsafe" style={{maxWidth: '680px', width: '100%'}} />
+
+where [freeing memory safely](https://en.wikipedia.org/wiki/Dangling_pointer) is not an option.
+
+To address this issue Rust applies the **ownership transfer**.
+
+<img src="/blog/rust-ownership/6.webp" alt="Ownership transfer with DROP" style={{maxWidth: '680px', width: '100%'}} />
+
+The `hi` **value ownership** has been **transferred** from `first_greet` to `second_greet` so:
+
+- Accessing `first_greet` will be impossible;
+- The memory is efficiently and safely managed.
+
+Like gravity moves across dimensions in [Interstellar](https://en.wikipedia.org/wiki/Interstellar_(film)), ownership moves across variables, scopes and functions.
+
+```rust
+fn print_len(str: String) {
+    println!("len: {}", str.len());
+}
+
+fn main() {
+    let greet = String::from("hi");
+
+    print_len(greet);
+
+    // ✗ compile error
+    println!("greet: {}", greet);
+}
+```
+
+In the example above the `hi` **value ownership** has been **transferred** from the variable `greet` to the `print_len` function. `greet` access is no longer allowed by the compiler.
+
+The fix can be more or less straightforward:
+
+- Return **ownership** to the main function;
+
+```rust
+fn print_len(str: String) -> String {
+    println!("len: {}", str.len());
+    str
+}
+
+fn main() {
+    let greet = String::from("hi");
+
+    let same_greet = print_len(greet);
+
+    // ✓ compiles successfully
+    println!("same_greet: {}", same_greet);
+}
+```
+
+- Borrow `greet` **value** using a reference (known as **borrowing**);
+
+```rust
+fn print_len(str: &String) {
+    println!("len: {}", str.len());
+}
+
+fn main() {
+    let greet = String::from("hi");
+
+    print_len(&greet);
+
+    // ✓ compiles successfully
+    println!("greet: {}", greet);
+}
+```
+
+## Borrowing
+
+The latter would be better in readability and use-case terms. A simple `print_len` function should not return a value just to please the compiler.
+
+The magic is possible thanks to the `&` operator.
+
+You can find it in the `print_len` function signature indicating that:
+
+- `print_len` expects a reference to a string;
+- `print_len` invocation using `greet` string reference won't transfer ownership, so `println!` `greet` value access is considered safe and the program will compile successfully;
+
+<img src="/blog/rust-ownership/10.webp" alt="Borrowing with reference" style={{maxWidth: '680px', width: '100%'}} />
+
+Now it's time to take a break from our journey. A lot of questions may rise at this point. A lot of details like *mutability* and its ownership / borrowing influence, *dereferencing* and others have been left out to make this article readable yet exciting.
+
+In case I don't see ya, good afternoon, good evening, and good night!

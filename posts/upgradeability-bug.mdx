@@ -1,0 +1,105 @@
+---
+title: "Upgradeability may (not) be a Bug"
+description: "Inspired by Upgradeability Is a Bug and a true ERC-20 Token story."
+date: "February 20, 2019"
+---
+
+Inspired by [Upgradeability Is a Bug](https://medium.com/consensys-diligence/upgradeability-is-a-bug-dba0203152ce) and a **true ERC-20 Token story**.
+
+I mostly agree with Stevens's article. But what happens when one of your company's main product should be unstoppable code running on the Ethereum blockchain and interacting with smart contracts which have:
+
+- non-compliant standard interface;
+- unpredictable business logic/interface implementation?
+
+Mix everything with:
+
+- the (not so) early stage of the overall Ethereum environment;
+- the rush of the start-ups aiming at a "when Lambo" ICO;
+- the belief that just a bit of "copy and paste" would be enough to create an ERC-20 Token smart contract
+
+and you will end up designing an upgradeable smart contract.
+
+This has been one of our challenges. A part of our Hybrid Decentralized Exchange solution was to deliver to users a smart contract aka *TradingWallet* for ERC-20 tokens management.
+
+From an architectural point of view we designed the *TradingWallet* as a combination of three smart contracts:
+
+- the *Wallet* smart contract: keeping track of the state variables and defining the *TradingWallet* functionalities interface;
+- the *WalletLogicV1/2/3...* smart contract: implementing the business logic of the above interface;
+- the *WalletConnector* smart contract: connecting the *Wallet* SC with the *WalletLogicVx* SC.
+
+Basically the *Wallet* smart contract is redirecting a function call to the *WalletLogicVx* proper function implementation underneath using *.delegatecall()*.
+
+```solidity
+contract Wallet {
+  ...
+  address public logic_;
+  /**
+   * @dev Deposit any ERC20 token into this wallet.
+   * @param _token The address of the existing token contract.
+   * @param _amount The amount of tokens to deposit.
+   * @return Bool if the deposit was successful.
+   */
+  function depositERC20Token (
+    address _token,
+    uint256 _amount
+  ) external
+    returns(bool)
+  {
+    ...
+    require(logic_.delegatecall(bytes4(sha3('deposit(address,uint256)')), _token, _amount));
+    return true;
+  }
+}
+```
+
+> so if the TradingWallet business logic could be changed under the hood, how could an upgradeable smart contract be immutable and trustworthy?
+
+> Giving up the power in favor of its user, known as the contract Owner.
+
+Each time a new *TradingWallet* is automatically deployed it will be connected to a specific user, more specifically to the user's *externally owned accounts*. So the contract Owner can:
+
+- agree with the creation of his/her *TradingWallet using the current public WalletLogicVx;*
+- manage his/her assets;
+- then possibly agree with the update of the *current WalletLogicVx* of his/her *TradingWallet* that might fix some bugs.
+
+As you can imagine, the *TradingWallet* purpose is managing ETH and tokens for trading. The ERC-20 tokens are smart contracts defined by their common interface:
+
+```solidity
+pragma solidity ^0.5.2;
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+interface IERC20 {
+    function transfer(address to, uint256 value) external returns (bool);
+
+    function approve(address spender, uint256 value) external returns (bool);
+
+    function transferFrom(address from, address to, uint256 value) external returns (bool);
+
+    function totalSupply() external view returns (uint256);
+
+    function balanceOf(address who) external view returns (uint256);
+
+    function allowance(address owner, address spender) external view returns (uint256);
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+```
+
+Unfortunately there are many tokens that don't satisfy the interface above. Indeed there are a lot of tokens that **aren't returning any value** for critical functions like the *transfer* or the *transferFrom* function.
+
+It makes it quite difficult to understand if a user *TradingWallet* **deposit** function call has actually succeeded. The most common way to assure the success of the transfer before changing any other EVM state is:
+
+*require(IERC20(\_tokenAddress).transferFrom(msg.sender, this, \_amount), ...);*
+
+but since the recently added [RETURNDATASIZE](https://www.ethervm.io/#3D) opcode and the bad token returning a data size shorter than expected the above *require* reverts the EVM state transition even if the transfer would actually succeed.
+
+<img src="/blog/upgradeability-bug/1.png" alt="RETURNDATASIZE issue" style={{maxWidth: '380px', width: '100%'}} />
+
+> so how have we handled the issue without discontinuing the service?
+
+> Writing a bit of assembly, explaining and proposing to our users an upgrade of the TradingWallet.

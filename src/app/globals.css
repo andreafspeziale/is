@@ -1,0 +1,191 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme inline {
+  --font-mono: var(--font-jetbrains-mono), monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --color-surface0: var(--surface0);
+  --color-surface1: var(--surface1);
+  --color-surface2: var(--surface2);
+  --color-overlay0: var(--overlay0);
+  --color-overlay1: var(--overlay1);
+  --color-overlay2: var(--overlay2);
+  --color-subtext0: var(--subtext0);
+  --color-subtext1: var(--subtext1);
+  --color-text: var(--text);
+  --color-mantle: var(--mantle);
+  --color-crust: var(--crust);
+  --color-blue: var(--blue);
+  --color-lavender: var(--lavender);
+  --color-teal: var(--teal);
+  --color-green: var(--green);
+  --color-yellow: var(--yellow);
+  --color-peach: var(--peach);
+  --color-red: var(--red);
+}
+
+:root,
+[data-theme="mellow"] {
+  --background: #161617;
+  --foreground: #c9c7cd;
+  --accent: #aca1cf;
+  --surface0: #2a2a2d;
+  --surface1: #3e3e43;
+  --surface2: #57575f;
+  --overlay0: #757581;
+  --overlay1: #9998a8;
+  --overlay2: #c1c0d4;
+  --subtext0: #c1c0d4;
+  --subtext1: #cac9dd;
+  --text: #c9c7cd;
+  --mantle: #131314;
+  --crust: #131314;
+  --blue: #aca1cf;
+  --lavender: #b9aeda;
+  --teal: #90b99f;
+  --green: #90b99f;
+  --yellow: #e6b99d;
+  --peach: #f5a191;
+  --red: #f5a191;
+  --pre-bg: #131314;
+  --pre-border: #2a2a2d;
+  --code-border: #3e3e43;
+  --code-text: #c9c7cd;
+  --code-span: #cac9dd;
+  --blockquote-border: #aca1cf;
+  --glow: rgba(172, 161, 207, 0.25);
+}
+
+[data-theme="frappe"] {
+  --background: #303446;
+  --foreground: #c6d0f5;
+  --accent: #ca9ee6;
+  --surface0: #414559;
+  --surface1: #51576d;
+  --surface2: #626880;
+  --overlay0: #737994;
+  --overlay1: #838ba7;
+  --overlay2: #949cbb;
+  --subtext0: #a5adce;
+  --subtext1: #b5bfe2;
+  --text: #c6d0f5;
+  --mantle: #292c3c;
+  --crust: #232634;
+  --blue: #8caaee;
+  --lavender: #babbf1;
+  --teal: #81c8be;
+  --green: #a6d189;
+  --yellow: #e5c890;
+  --peach: #ef9f76;
+  --red: #e78284;
+  --pre-bg: #292c3c;
+  --pre-border: #414559;
+  --code-border: #51576d;
+  --code-text: #c6d0f5;
+  --code-span: #b5bfe2;
+  --blockquote-border: #ca9ee6;
+  --glow: rgba(202, 158, 230, 0.25);
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+}
+
+.shiki,
+.shiki span {
+  color: var(--shiki-dark) !important;
+  background-color: var(--shiki-dark-bg) !important;
+  font-style: var(--shiki-dark-font-style) !important;
+  font-weight: var(--shiki-dark-font-weight) !important;
+  text-decoration: var(--shiki-dark-text-decoration) !important;
+}
+
+.prose a:not(.anchor) {
+  @apply text-accent no-underline hover:underline;
+}
+
+.prose a.anchor {
+  @apply relative no-underline;
+}
+
+.prose a.anchor::before {
+  @apply absolute -left-4 opacity-0 transition-opacity duration-200 content-['#'] text-accent;
+}
+
+.prose a.anchor:hover::before,
+.prose a.anchor:focus-visible::before {
+  @apply opacity-100;
+}
+
+.prose a.anchor:focus-visible {
+  @apply outline-none;
+}
+
+.prose pre {
+  @apply overflow-x-auto my-4 rounded-sm;
+  border: 1px solid var(--pre-border);
+  background: var(--pre-bg);
+}
+
+.prose code:not(pre code) {
+  @apply px-1 py-0.5 text-sm rounded;
+  border: 1px solid var(--code-border);
+  color: var(--code-text);
+}
+
+.prose code:not(pre code)::before,
+.prose code:not(pre code)::after {
+  content: none;
+}
+
+.prose pre code {
+  @apply p-4 block bg-transparent;
+  border: initial;
+  line-height: 1.6;
+}
+
+.prose code span {
+  @apply font-medium;
+  color: var(--code-span);
+}
+
+/* Prose typography — tuned mono for long-form reading */
+.prose-tuned-mono {
+  font-size: 0.9375rem; /* 15px — slightly smaller mono reads better */
+  line-height: 1.85;
+  letter-spacing: 0.01em;
+}
+
+.prose-tuned-mono :where(p):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+}
+
+.prose-tuned-mono :where(h2):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+  margin-top: 2.5em;
+  letter-spacing: -0.02em;
+}
+
+.prose-tuned-mono :where(h3):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+  margin-top: 2em;
+  letter-spacing: -0.01em;
+}
+
+.prose-tuned-mono :where(li):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+}
+
+.prose-tuned-mono :where(blockquote):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+  font-style: normal;
+  border-left-color: var(--blockquote-border);
+  padding-left: 1.5em;
+}
+
+/* accent glow for * markers and accent links */
+.accent-glow {
+  text-shadow: 0 0 10px var(--glow);
+}

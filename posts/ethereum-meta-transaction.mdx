@@ -1,0 +1,368 @@
+---
+title: "Understanding Ethereum Meta Transaction"
+description: "Meta transaction made easy."
+date: "July 8, 2019"
+---
+
+What I really like about Ethereum are the endless challenges around it.
+
+As a lot of great developers from all over the world are pushing hard to make Ethereum 2.0 real, the fight to make it mainstream is still ongoing and it is a hot topic.
+
+Lately I've been studying **meta transactions** wondering if ether-less accounts can interact with the blockchain and possibly pay for GAS in ERC20 tokens.
+
+The starting point for my research is the contribution of the amazing [Austin Griffith](https://x.com/austingriffith) who I met during [ETHCC19](https://ethcc.io/) and I'm writing this article to help newbies like me find a simple way to approach what meta transactions are.
+
+> In my perception meta transactions aren't just a creative way of improving Ethereum on-boarding. More in general they are a way of agreeing on something and make it happen.
+
+## The bouncer proxy approach
+
+The bouncer proxy approach consists in four elements:
+
+- **The user account:** A private/public key pair which doesn't own any ETH. The account can sign messages which can be EVM instructions;
+- **The miner account:** A private/public key pair owning ETH and available for paying the blockchain transaction fee on behalf of a user;
+- **The bouncer proxy smart contract:** The smart contract which takes as input a signed message submitted by a third party;
+- **The recipient smart contract:** It is the smart contract which the user would like to interact with.
+
+In a scenario where:
+
+- A user has one or more Ethereum accounts which don't have any ETH and don't want to expose;
+- The user is the owner of a proxy contract which can forward calls only if the input message is signed by the user itself or its whitelisted accounts;
+- The proxy contract is funded with assets like ETH or ERC20s which can be used to reward miners based on the users instructions.
+
+In order to submit a transaction to the Ethereum network -- without paying any GAS -- a user account should begin with creating, hashing and signing a message.
+
+```javascript
+const userProxyContractNonce = new BigNumber(await ProxyInstance.nonce.call())
+
+const messageToBeHashed = [
+  ProxyInstance.address,
+  user,
+  TargetContractInstance.address,
+  web3.utils.toTwosComplement(userValueTransactionField),
+  userDataTransactionField,
+  AssetInstance.address,
+  web3.utils.toTwosComplement(REWARD_AMOUNT),
+  web3.utils.toTwosComplement(userProxyContractNonce),
+]
+
+const messageHashed = web3.utils.soliditySha3(...messageToBeHashed)
+
+const messageSigned = await web3.eth.sign(messageHashed, user)
+```
+
+The hashed signed message is the user meta transaction representing a transaction with some decorators and it is composed by:
+
+- The proxy smart contract address;
+- The user address;
+- The transaction smart contract recipient;
+- The user transaction object value field;
+- The user transaction object data field;
+- The address of the asset to be used as reward for the current meta transaction;
+- The amount of the asset to be used as reward for the current meta transaction;
+- The *user proxy contract nonce*.
+
+If you are reading this article, you are probably familiar with most of the parameters listed above. On the other hand you may find what I call the **user proxy contract nonce** rather confusing due to the shared purpose of the more general **Ethereum account nonce**. Both keep track of the number of the transactions made by an account preventing replay attacks and preserving the transactions order. The user proxy contract nonce is only limited to the executions made through the proxy contract.
+
+As a matter of fact the proxy contract nonce is connected to the user, stored in a state variable in the proxy smart contract and updated every time a new meta transaction is processed by the smart contract.
+
+When the meta transaction is ready, a miner account takes it up and invokes the **forward** function of the proxy contract.
+
+```solidity
+function forward(
+  bytes memory _signedHashedMessage,
+  address _user,
+  address _recipient,
+  uint _transactionObjectValueField,
+  bytes memory _transactionObjectDataField,
+  address _rewardTokenAddress,
+  uint _rewardAmount
+)
+  public
+  returns (bool)
+{
+  bytes32 hashedMessage = getHash(
+    _user,
+    _recipient,
+    _transactionObjectValueField,
+    _transactionObjectDataField,
+    _rewardTokenAddress,
+    _rewardAmount
+  );
+
+  //increment the nonce counter so this tx can't run again
+  nonce[_user] += 1;
+
+  //this makes sure signer signed correctly AND signer is a valid bouncer
+  require(
+    isSignerWhitelisted(hashedMessage, _signedHashedMessage),
+    "fn: forward(), msg: forward Signer is not whitelisted"
+  );
+  // make sure the signer pays in whatever token (or ether) the sender and signer agreed to
+  // or skip this if the sender is incentivized in other ways and there is no need for a token
+  if (_rewardAmount > 0) {
+    // address 0 mean reward with ETH
+    if (_rewardTokenAddress == address(0)){
+      // reward with ETH
+      msg.sender.transfer(_rewardAmount);
+    } else {
+      // reward token
+      require(
+        _rewardTokenAddress._safeTransfer(
+          msg.sender,
+          _rewardAmount
+        ),
+        "fn: forward(), msg: token transfer failed"
+      );
+    }
+  }
+  // execute the transaction with all the given parameters
+  require(
+    executeCall(_recipient, _transactionObjectValueField, _transactionObjectDataField),
+    "fn: forward(), msg: executeCall() function failed"
+  );
+  emit LogTransactionForward(
+    _signedHashedMessage,
+    _user,
+    _recipient,
+    _transactionObjectValueField,
+    _transactionObjectDataField,
+    _rewardTokenAddress,
+    _rewardAmount,
+    hashedMessage
+  );
+
+  return true;
+}
+```
+
+The forward function inputs are:
+
+- The hashed signed message created by the user account;
+- The address of the user account which is the signer;
+- The transaction smart contract recipient;
+- The user transaction object value field;
+- The user transaction object data field;
+- The address of the asset to be used as reward for the current meta transaction;
+- The amount of the asset to be used as reward for the current meta transaction.
+
+The smart contract generates the hashed message using the function parameters, as follows:
+
+```solidity
+function getHash(
+  address _signer,
+  address _recipient,
+  uint _transactionObjectValueField,
+  bytes memory _transactionObjectDataField,
+  address _rewardTokenAddress,
+  uint _rewardAmount
+)
+  public
+  view
+  returns (bytes32)
+{
+  return keccak256(
+    abi.encodePacked(
+      address(this),
+      _signer,
+      _recipient,
+      _transactionObjectValueField,
+      _transactionObjectDataField,
+      _rewardTokenAddress,
+      _rewardAmount,
+      nonce[_signer]
+    )
+  );
+}
+```
+
+and validates the signer identity. This implies that only a meta transaction signed by the user or a whitelisted account can be proxied and a miner can be rewarded.
+
+```solidity
+function isSignerWhitelisted(
+  bytes32 _hashedMessage,
+  bytes memory _signedHashedMessage
+)
+  internal
+  view
+  returns (bool)
+{
+  bytes32 r;
+  bytes32 s;
+  uint8 v;
+  // Check the signature length
+  if (_signedHashedMessage.length != 65) {
+    return false;
+  }
+  // Divide the signature in r, s and v variables
+  // ecrecover takes the signature parameters, and the only way to get them
+  // currently is to use assembly.
+  // solium-disable-next-line security/no-inline-assembly
+  assembly {
+    r := mload(add(_signedHashedMessage, 32))
+    s := mload(add(_signedHashedMessage, 64))
+    v := byte(0, mload(add(_signedHashedMessage, 96)))
+  }
+  // Version of signature should be 27 or 28, but 0 and 1 are also possible versions
+  if (v < 27) {
+    v += 27;
+  }
+  // If the version is correct return the signer address
+  if (v != 27 && v != 28) {
+    return false;
+  } else {
+    // solium-disable-next-line arg-overflow
+    return whitelist[ecrecover(
+      keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _hashedMessage)),
+      v, r, s
+    )];
+  }
+}
+```
+
+When the signer is validated, the reward amount is transferred from the proxy contract to the miner account.
+
+```solidity
+if (_rewardAmount > 0) {
+  // address 0 mean reward with ETH
+  if (_rewardTokenAddress == address(0)){
+    // reward with ETH
+    msg.sender.transfer(_rewardAmount);
+  } else {
+    // reward token
+    require(
+      _rewardTokenAddress._safeTransfer(
+        msg.sender,
+        _rewardAmount
+      ),
+      "fn: forward(), msg: token transfer failed"
+    );
+  }
+}
+```
+
+The proxy executes the meta transaction instruction invoking the **executeCall** function and the miner account is paying the GAS for it.
+
+```solidity
+function executeCall(
+  address _to,
+  uint256 _value,
+  bytes memory _data
+)
+  internal
+  returns (bool success)
+{
+  // solium-disable-next-line security/no-inline-assembly
+  assembly {
+    success := call(gas, _to, _value, add(_data, 0x20), mload(_data), 0, 0)
+  }
+}
+```
+
+At this point we have an ether-less user account which achieved the submission of its transaction potentially paying for GAS in ERC20 tokens.
+
+![magic](https://media.giphy.com/media/9r75ILTJtiDACKOKoY/giphy.gif)
+
+**It feels like magic**
+
+**but you'll get wasted along the road**
+
+![wasted](https://media.giphy.com/media/RLi2oeVZiVkE8/giphy.gif)
+
+because the proxy approach may be a pain in the a\*\*:
+
+- Each user should be able to deploy its own proxy SC;
+- The reward assets must be owned by the proxy SC;
+- Each user should be able to manage and fund its own proxy SC.
+
+In addition, if the business logic of your meta transaction smart contract recipient is based on the **msg.sender** identity, the interaction with it won't be smooth.
+
+Let's pretend a user with no ETH tries to invoke an **ERC20 approve method** through a proxy smart contract to allow another trusted user to move its funds.
+
+```solidity
+function approve(address spender, uint256 value) public returns (bool) {
+  _approve(msg.sender, spender, value);
+  return true;
+}
+
+function _approve(address owner, address spender, uint256 value) internal {
+  require(owner != address(0), "ERC20: approve from the zero address");
+  require(spender != address(0), "ERC20: approve to the zero address");
+  _allowances[owner][spender] = value;
+  emit Approval(owner, spender, value);
+}
+```
+
+*Inspired by [OpenZeppelin ERC20.sol](https://github.com/OpenZeppelin/openzeppelin-solidity/blob/master/contracts/token/ERC20/ERC20.sol)*
+
+The user prepares the meta transaction, a miner submits it to the proxy smart contract and the contract executes it. As a result the trusted user can move funds from the proxy contract rather than from the user.
+
+This issue can be addressed using the **native meta transactions**.
+
+## The native meta transactions approach
+
+In the native meta transaction approach the meta transaction signer is retrieved in the meta transaction recipient rather than the proxy smart contract.
+
+An ether-less account can approve another trusted account creating a meta transaction and the miner invokes the **metaApprove method** rather than the standard ERC20 approve method.
+
+```solidity
+mapping (address => uint256) public replayNonce;
+
+function metaApprove(address spender, uint256 value, uint256 nonce, uint256 reward, bytes signature) public returns (bool) {
+  require(spender != address(0));
+  bytes32 metaHash = metaApproveHash(spender,value,nonce,reward);
+  address signer = getSigner(metaHash,signature);
+  require(nonce == replayNonce[signer]);
+  replayNonce[signer]++;
+  _allowed[signer][spender] = value;
+  if(reward>0){
+    _transfer(signer, msg.sender, reward);
+  }
+  emit Approval(msg.sender, spender, value);
+  return true;
+}
+
+function _approve(address owner, address spender, uint256 value) internal {
+  require(owner != address(0), "ERC20: approve from the zero address");
+  require(spender != address(0), "ERC20: approve to the zero address");
+  _allowances[owner][spender] = value;
+  emit Approval(owner, spender, value);
+}
+
+function metaApproveHash(address spender, uint256 value, uint256 nonce, uint256 reward) public view returns(bytes32){
+  return keccak256(abi.encodePacked(address(this),"metaApprove", spender, value, nonce, reward));
+}
+
+function getSigner(bytes32 _hash, bytes _signature) internal pure returns (address){
+  bytes32 r;
+  bytes32 s;
+  uint8 v;
+  if (_signature.length != 65) {
+    return address(0);
+  }
+  assembly {
+    r := mload(add(_signature, 32))
+    s := mload(add(_signature, 64))
+    v := byte(0, mload(add(_signature, 96)))
+  }
+  if (v < 27) {
+    v += 27;
+  }
+  if (v != 27 && v != 28) {
+    return address(0);
+  } else {
+    return ecrecover(keccak256(
+      abi.encodePacked("\x19Ethereum Signed Message:\n32", _hash)
+    ), v, r, s);
+  }
+}
+```
+
+The signer address, as in the bouncer proxy approach, is retrieved from the signature parameter and it is delivered to the **\_approve** function without resorting the msg.sender.
+
+As a result the trusted user account is now able to move ERC20 funds on behalf of the user.
+
+> Unfortunately this approach can't be applied to ERC20 tokens which were already deployed because they don't support meta transactions.
+
+### Now what?
+
+My teammates and I feel that the hack could be done by mixing ingredients together -- (buzzword alert) "back-end", "smart contracts", "atomic swaps" and "event listeners" -- and then share the recipe with the community.

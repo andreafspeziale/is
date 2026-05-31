@@ -1,0 +1,194 @@
+---
+title: "Atomic Ethereum Blockchain Operations"
+description: "Chained Ethereum transactions as agreement."
+date: "December 19, 2019"
+---
+
+In my [latest article](/blog/ethereum-meta-transaction) I promised to share how to enable blockchain fee payments in ERC20 tokens for ether-less accounts, even if the smart contract or token you are interacting with doesn't support meta-transactions natively.
+
+I will go through it really quickly because it is straightforward. What is really interesting is the smart contract designed while working on the feature described above.
+
+In order to achieve this feature, you can create a system which at least:
+
+- Exposes a list of supported ERC20 tokens;
+- Accepts ether-less account transaction intention;
+- Estimates the GAS, then the ETH and the ERC20 cost of the ether-less account transaction intention;
+- Prepares a payload to be signed by the ether-less account which describes how many ETH it will receive in exchange for the estimated ERC20 cost;
+- Prepares the payload of the ether-less account transaction intention;
+- Sends the payload and returns it signed by the ether-less account;
+- Checks some pre-conditions and broadcasts the exchange transaction to the proper smart contract which contains the exchange payload as input;
+- As soon as the exchange transaction is mined, the very first transaction intention of the ether-less account is broadcasted.
+
+The ether-less account has accepted:
+
+- The ERC20 cost of its transaction intention;
+- To receive ETH in exchange for some ERC20 tokens to be spent on its behalf.
+
+> Yes... I know there are many issues in the described flow.
+
+![hmm](https://media.giphy.com/media/d3mlE7uhX8KFgEmY/giphy.gif)
+
+But most of them can be addressed one by one and this is why I still want to focus on the mentioned smart contract. I like to call it: *Atomic Proxy Smart Contract*.
+
+## The Atomic Proxy Smart Contract
+
+You will probably ask yourself why I refer to the smart contract as *Atomic* and *Proxy*.
+
+The reason is
+
+> it handles a sequence of well-defined transactions on behalf of multiple signers.
+
+The idea was to have a smart contract which uses the meta-transaction concepts and gets a "destructured" chain of transactions (with its signers) as input. The chain is an agreement between two or more actors. If one of the chained transactions fails, the chain is broken and the agreement fails as well. The recipient of each transaction must be a smart contract and it will be able to check the transaction signer and to respond consequently. The only requirement is that the signer must be the first parameter of the recipient smart contract function call.
+
+### The Entry Point
+
+The **forward** function is the *Atomic Proxy* smart contract entry point:
+
+```solidity
+/**
+ * @dev Unpack and forward a package of meta transactions based on provided signatures.
+ * @param packedSignature    The concatenated meta transactions signed hashed messages.
+ * @param recipients         The meta transactions recipients.
+ * @param txsValueField      The meta transactions value fields.
+ * @param packedTxsDataField The concatenated meta transactions data fields.
+ * @param txsDataSizes       The size of each meta transactions data field.
+ * @param salt               The meta transactions salt.
+ * @param expiration         The operation expiration timestamp.
+ */
+function forward(
+  bytes memory packedSignature,
+  address[] memory recipients,
+  uint[] memory txsValueField,
+  bytes memory packedTxsDataField,
+  uint32[] memory txsDataSizes,
+  uint salt, // managed outside
+  uint expiration
+)
+```
+
+As you can see, the function inputs are the components of the chained transactions to be forwarded. For each transaction we can easily identify the **recipient** contained in the *recipients* param. and the **value** field contained in the *txsValueField* param.
+
+> *What about the data field of each transaction?*
+
+We need to treat each transaction data field, hexadecimals of different lengths, as a dynamic array of **bytes**. Unfortunately, it is still impossible to pass an array of bytes as input of a smart contract public function. The approach was to pack each transaction data field in a single bytes input (*packedTxsDataField*) with an array of integers describing the length of each data field (*txsDataSizes*) in order to unpack the data later.
+
+> Ok... you have the **to**, *data* and **value** field of each transaction. Where are the senders?
+
+As mentioned above, the chain of transactions represents the agreement among the parties. Each party must sign the forward function payload as agreement proof and each data field must have the transaction signer as first parameter. After unpacking the *packedSignature* and the *packedTxsDataField* input, we can compare the extracted signers and be sure each transaction has the right one.
+
+> *What about the other inputs?*
+
+The *expiration* and *salt* parameters provide a lifecycle to the chained transactions.
+
+### The Flow
+
+At the end of the day we are:
+
+- Building an array of transactions data field from a packed data;
+- Building an array of signatures from a packed data;
+- Doing some checks;
+- Forwarding a chain of transactions which acts as an agreement.
+
+![wolf of wall street](https://media.giphy.com/media/5VIjIJ9YO5lyU/giphy.gif)
+
+**Expiration** is one of the most important pre-conditions. If you are dealing with some automated exchange value system, you definitely want to avoid being victim of market fluctuation.
+
+The **unpack** of the transactions data field was an interesting challenge:
+
+```solidity
+/**
+ * @dev Returns an array of bytes from the concat of dynamic size bytes.
+ * @param data  The concatenated bytes.
+ * @param sizes The size of each bytes.
+ */
+function unpack(
+  bytes memory data,
+  uint32[] memory sizes
+)
+  internal
+  pure
+  returns(bytes[] memory)
+{
+  bytes[] memory results = new bytes[](sizes.length);
+  uint position = 0;
+  for (uint i = 0; i < sizes.length; i++) {
+    results[i] = data.slice(position, sizes[i]);
+    position += sizes[i];
+  }
+  require(
+    position == data.length,
+    "fn: unpack(), msg: wrong data length (dynamic)"
+  );
+  return results;
+}
+```
+
+Using the **slice** method provided by the [BytesLib.sol](https://github.com/GNSPS/solidity-bytes-utils) library it was possible to create the *txsDataField* array by looping the *packedTxsDataField* parameter and selecting the actual transaction data field with its size. The same thing needs to be done for the *packedSignature* array. The difference between the *packedTxsDataField* and *packedSignature* arrays is that the latter doesn't need any extra array to describe the length of each element. This is because Ethereum signatures have a fixed length of 65 bytes.
+
+After checking the **getHash** function result and ensuring we are not in the middle of a *replay attack*, we get from each transaction data field the first function call parameter which represents the **sender** of the transaction:
+
+```solidity
+/**
+ * @dev Return the first param of the meta tx data field which must be an address.
+ * E.g: in transferFrom(sender, to, amount) sender address is returned.
+ * @param dataField The meta transactions data field.
+ */
+function getAddressFromData(bytes memory dataField)
+  public
+  pure
+  returns (address)
+{
+  address sender;
+  // solium-disable-next-line security/no-inline-assembly
+  assembly {
+    sender := mload(add(dataField, 36))
+  }
+  return sender;
+}
+```
+
+In order to check if the signers are a **subset** of senders and every party of the agreement accepted the terms represented by the chained transactions, we can obtain the signers using the well-known Solidity [ecrecover](https://solidity.readthedocs.io/en/v0.5.3/units-and-global-variables.html#mathematical-and-cryptographic-functions) method.
+
+Now each transaction is ready to be processed and forwarded borrowing the [uPort project](https://github.com/uport-project/uport-identity) **executeCall** function.
+
+## The Recipient smart contract
+
+In the exchange value scenario, one of the chained transactions recipients can be a smart contract which owns some ETH and transfers it to someone else.
+
+```solidity
+/**
+ * @dev Send ETH.
+ * This function can be call only from the owner of the smart contract.
+ * @param signer    The signer of the operation.
+ * @param recipient The ETH recipient.
+ * @param amount    The amount to be received.
+ */
+function sendETH(
+  address signer,
+  address payable recipient,
+  uint256 amount
+)
+  external
+  onlyProxy
+  whenNotPaused
+  returns (bool)
+{
+  require(amount > 0, "fn: sendETH(), msg: amount == 0");
+  require(
+    amount <= address(this).balance,
+    "fn: sendETH(), msg: ETH balance not sufficient"
+  );
+  require(isSigner(signer), "fn: sendETH(), msg: signer not allowed");
+  recipient.transfer(amount);
+  emit LogSendETH(
+    signer,
+    recipient,
+    amount
+  );
+  return true;
+}
+```
+
+As you can see from the example above, the **sendETH** function gets the signer as first parameter.
+
+The possible **ETHSender** smart contract, verifying the passed signer, can execute the transaction or make it fail. As a consequence, the execution of chained transactions continues or is interrupted and the agreement it represents is respected or not.
