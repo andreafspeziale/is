@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { JetBrains_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import "./globals.css"
 import { Navbar } from "../components/navbar"
 import { ThemeProvider } from "../components/theme-provider"
@@ -72,6 +73,7 @@ export default function RootLayout({
           </div>
         </ThemeProvider>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
