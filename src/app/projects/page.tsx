@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   openGraph: {
     images: [
       {
-        url: "https://www.andreafspeziale.is/og/home?title=projects",
+        url: "https://www.spznrf.dev/og/home?title=projects",
       },
     ],
   },
