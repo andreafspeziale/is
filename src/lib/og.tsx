@@ -50,7 +50,7 @@ export async function createOgImage(
               flexShrink: 0,
             }}
           >
-            *
+            /
           </span>
           <h1
             style={{
