@@ -14,11 +14,11 @@ or at least a WTF!
 
 <img src="/blog/worker-threads-nodejs/1.png" alt="Stack copy for fixed size types" style={{maxWidth: '880px', width: '100%'}} />
 
-Symptoms are straightforward: latency increases, requests pile up, and the system becomes unresponsive. In Kubernetes, this often manifests as pods restarting due to liveness probe failures, even though memory and network metrics look fine. The CPU is maxed out on the main thread, blocking everything else.
+Symptoms are straightforward: latency increases, requests pile up and the system becomes unresponsive. In Kubernetes, this often manifests as pods restarting due to liveness probe failures, even though memory and network metrics look fine. The CPU is maxed out on the main thread, blocking everything else.
 
 I recently faced this issue with an HTTP API that scores how similar a given text is to each result in a response set.
 
-H/v scaling is not the answer. A good profiling and thoughtful resource allocation is part of the game, but as a SW engineer the first thing you need to do is offload the heavy computations to a pool of [worker threads](https://nodejs.org/api/worker_threads.html), allowing the main thread to remain responsive for handling I/O, probes and other tasks.
+H/v scaling is not the answer. Good profiling and thoughtful resource allocation are part of the game, but as a software engineer the first thing you need to do is offload the heavy computations to a pool of [worker threads](https://nodejs.org/api/worker_threads.html), allowing the main thread to remain responsive for handling I/O, probes and other tasks.
 
 The pool service:
 
@@ -38,7 +38,8 @@ export class WorkerPool implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  // ... private methods: runTask, spawnWorker, releaseWorker, drainQueue, replaceWorker ...
+  // runTask, spawnWorker, releaseWorker, drainQueue, replaceWorker
+  ...
 
   execute(payload: WorkerPayload): Promise<WorkerResult> {
     if (this.destroyed) {
@@ -97,6 +98,8 @@ Each dispatched task gets a timer. Without it, a stalled worker (deadlock, infin
 ```typescript
 private runTask(worker: Worker, task: WorkerTask): void {
   let settled = false;
+  // cleanup: clearTimeout, remove listeners
+  ...
 
   const onMessage = (result: WorkerResult) => {
     if (settled) return;
@@ -114,6 +117,7 @@ private runTask(worker: Worker, task: WorkerTask): void {
     this.replaceWorker(worker);
   }, this.taskTimeoutMs);
 
+  // onError, onExit: settled guard, cleanup, reject, replaceWorker
   worker.on('message', onMessage);
   worker.on('error', onError);
   worker.on('exit', onExit);
@@ -123,39 +127,43 @@ private runTask(worker: Worker, task: WorkerTask): void {
 
 Crashed workers get replaced automatically. But if spawning itself fails repeatedly (bad file path, OOM), we stop trying after `MAX_CONSECUTIVE_SPAWN_FAILURES` to avoid an infinite spawn loop.
 
-The worker runs in its own V8 isolate, it can saturate a full CPU core without affecting the main thread's ability to serve probes, accept connections, or dispatch other I/O. The implementation is minimal, it receives the payload, runs normalization, scores similarities and posts back:
+The worker runs in its own V8 isolate. It can saturate a full CPU core without affecting the main thread's ability to serve probes, accept connections, or dispatch other I/O. The implementation is minimal: receives the payload, runs normalization, scores similarities and posts back:
 
 ```typescript
 parentPort?.on('message', (payload: WorkerPayload) => {
-    // ... normalization logic ...
-    // ... similarity scoring ...
+  // normalization, similarity scoring
+  ...
 
-  parentPort?.postMessage({ 
-    // ... result construction ...
+  parentPort?.postMessage({
+    // result
+    ...
   });
 });
 ```
 
-The pool is injected via constructor in the consuming service, no manual lifecycle management, the framework handles instantiation and shutdown:
+The pool is injected via constructor in the consuming service. No manual lifecycle management, the framework handles instantiation and shutdown:
 
 ```typescript
 @Injectable()
 export class MyService {
   constructor(
-    // ... other dependencies ...
+    ...
     private readonly workerPool: WorkerPool,
   ) {}
 
   async execute(payload: Payload): Promise<Result> {
-    // ... pre-processing ...
+    // pre-processing
+    ...
 
     const { data: workerResult } = await withAsyncPerformance(() =>
       this.workerPool.execute({
-        // ... payload construction ...
+        // payload construction
+        ...
       }),
     );
 
-    // ... post-processing ...
+    // post-processing
+    ...
   }
 }
 ```
@@ -175,4 +183,4 @@ The pool pattern (pre-spawned long-lived workers with a task queue) amortizes th
 
 If the pool becomes the bottleneck, the next step is pushing the CPU-bound work below the JavaScript layer. The option that fits without rearchitecting is a native addon via [napi-rs](https://github.com/napi-rs/napi-rs) or [node-addon-api](https://github.com/nodejs/node-addon-api): the worker thread stays as-is and delegates the batch to native code that can parallelize the computation internally.
 
-**Hardcore?** Extract the workload entirely into a sidecar, communicating over a Unix socket or shared memory. Node becomes a thin proxy. The worker pool disappears, the sidecar owns the compute, and you can scale and deploy it independently.
+**Hardcore?** Extract the workload entirely into a sidecar, communicating over a Unix socket or shared memory. Node becomes a thin proxy. The worker pool disappears, the sidecar owns the compute and you can scale and deploy it independently.
