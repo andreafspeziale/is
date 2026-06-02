@@ -27,7 +27,7 @@ export default function ProjectsPage() {
 
 export const metadata: Metadata = {
   title: "Projects",
-  description: "Some of the projects I've worked on.",
+  description: "Open source projects I created and maintain.",
   openGraph: {
     images: [
       {

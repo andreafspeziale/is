@@ -18,11 +18,11 @@ export const metadata: Metadata = {
     default: "Andrea F. Speziale",
     template: "%s | Andrea F. Speziale",
   },
-  description: "Andrea F. Speziale | Engineering at Musixmatch.",
+  description: "Software engineer, open source enthusiast and more.",
   keywords: ["Andrea F. Speziale", "Andrea Francesco Speziale", "spznrf", "Staff Engineer", "Musixmatch", "TypeScript", "Node.js"],
   openGraph: {
     title: "Andrea F. Speziale",
-    description: "Andrea F. Speziale | Engineering at Musixmatch.",
+    description: "Software engineer, open source enthusiast and more.",
     url: "https://www.spznrf.dev",
     siteName: "Andrea F. Speziale",
     locale: "en_US",

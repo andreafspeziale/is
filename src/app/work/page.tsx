@@ -36,7 +36,7 @@ export default function WorkPage() {
 
 export const metadata: Metadata = {
   title: "Work",
-  description: "Places I've worked and what I built.",
+  description: "Where I've worked and helped ship.",
   openGraph: {
     images: [
       {

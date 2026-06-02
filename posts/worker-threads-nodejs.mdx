@@ -12,7 +12,7 @@ Usually,
 
 or at least a WTF!
 
-<img src="/blog/worker-threads-nodejs/1.png" alt="Stack copy for fixed size types" style={{maxWidth: '880px', width: '100%'}} />
+<img src="/blog/worker-threads-nodejs/1.png" alt="Kubernetes pods restarting" style={{maxWidth: '880px', width: '100%'}} />
 
 Symptoms are straightforward: latency increases, requests pile up and the system becomes unresponsive. In Kubernetes, this often manifests as pods restarting due to liveness probe failures, even though memory and network metrics look fine. The CPU is maxed out on the main thread, blocking everything else.
 
