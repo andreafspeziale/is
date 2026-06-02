@@ -68,7 +68,7 @@ export default function RootLayout({
         className={`${jetbrainsMono.variable} antialiased min-h-screen font-mono flex flex-col transition-colors duration-200`}
       >
         <ThemeProvider>
-          <div className="max-w-7xl w-full mx-auto px-6 sm:px-10 py-8">
+          <div className="max-w-6xl w-full mx-auto px-6 sm:px-10 py-8">
             <Navbar />
             {children}
           </div>

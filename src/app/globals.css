@@ -89,6 +89,10 @@
   --glow: rgba(202, 158, 230, 0.25);
 }
 
+html {
+  overflow-y: scroll;
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
