@@ -8,11 +8,11 @@ type ProjectItem = {
 
 export const projectItems: ProjectItem[] = [
   {
-    title: "mxm-api",
+    title: "mxm-client",
     description: "http client sdk showcase using undici, zod and pino logger",
     role: "creator and maintainer",
     technologies: ["typescript", "nodejs", "undici", "zod"],
-    href: "https://github.com/andreafspeziale/mxm-api",
+    href: "https://github.com/andreafspeziale/mxm-client",
   },
   {
     title: "beyhub",
