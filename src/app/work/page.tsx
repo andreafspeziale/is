@@ -36,11 +36,11 @@ export default function WorkPage() {
 
 export const metadata: Metadata = {
   title: "Work",
-  description: "Places I've worked and what I built.",
+  description: "Where I've worked and helped ship.",
   openGraph: {
     images: [
       {
-        url: "https://www.andreafspeziale.is/og/home?title=work",
+        url: "https://www.spznrf.dev/og/home?title=work",
       },
     ],
   },

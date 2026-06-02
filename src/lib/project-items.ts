@@ -19,7 +19,7 @@ export const projectItems: ProjectItem[] = [
     description: "completely vibe-coded beyblade web application",
     role: "creator and maintainer",
     technologies: ["typescript", "react", "vite", "bun"],
-    href: "https://github.com/andreafspeziale/beyhub",
+    href: "https://beyhub.vercel.app/compare",
   },
   {
     title: "os-cli",

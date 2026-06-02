@@ -3,12 +3,12 @@ import { getPublishedPosts } from "@/lib/blog"
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const posts = getPublishedPosts().map((post) => ({
-    url: `https://www.andreafspeziale.is/blog/${post.slug}`,
+    url: `https://www.spznrf.dev/blog/${post.slug}`,
     lastModified: new Date(post.metadata.date),
   }))
 
   const pages = ["", "/blog", "/work", "/projects"].map((path) => ({
-    url: `https://www.andreafspeziale.is${path}`,
+    url: `https://www.spznrf.dev${path}`,
     lastModified: new Date(),
   }))
 

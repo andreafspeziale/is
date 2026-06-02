@@ -35,10 +35,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata 
       description: post.metadata.description,
       publishedTime,
       type: "article",
-      url: `https://www.andreafspeziale.is/blog/${post.slug}`,
+      url: `https://www.spznrf.dev/blog/${post.slug}`,
       images: [
         {
-          url: `https://www.andreafspeziale.is/og/blog?title=${post.metadata.title}`,
+          url: `https://www.spznrf.dev/og/blog?title=${post.metadata.title}`,
         },
       ],
     },
@@ -48,7 +48,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata 
       card: "summary_large_image",
       creator: "@andreafspeziale",
       images: [
-        `https://www.andreafspeziale.is/og/blog?title=${post.metadata.title}&top=${publishedTime}`,
+        `https://www.spznrf.dev/og/blog?title=${post.metadata.title}&top=${publishedTime}`,
       ],
     },
   }
@@ -77,10 +77,10 @@ export default async function Post({ params }: PageProps) {
             datePublished: post.metadata.date,
             dateModified: post.metadata.date,
             description: post.metadata.description,
-            image: `https://www.andreafspeziale.is/og/blog?title=${
+            image: `https://www.spznrf.dev/og/blog?title=${
               post.metadata.title
             }&top=${formatDateLong(post.metadata.date)}`,
-            url: `https://www.andreafspeziale.is/blog/${post.slug}`,
+            url: `https://www.spznrf.dev/blog/${post.slug}`,
             author: {
               "@type": "Person",
               name: "Andrea F. Speziale",

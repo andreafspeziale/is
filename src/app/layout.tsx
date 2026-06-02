@@ -13,22 +13,23 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.andreafspeziale.is"),
+  metadataBase: new URL("https://www.spznrf.dev"),
   title: {
     default: "Andrea F. Speziale",
     template: "%s | Andrea F. Speziale",
   },
-  description: "Staff Engineer at Musixmatch.",
+  description: "Software engineer, open source enthusiast and more.",
+  keywords: ["Andrea F. Speziale", "Andrea Francesco Speziale", "spznrf", "Staff Engineer", "Musixmatch", "TypeScript", "Node.js"],
   openGraph: {
     title: "Andrea F. Speziale",
-    description: "Staff Engineer at Musixmatch.",
-    url: "https://www.andreafspeziale.is",
+    description: "Software engineer, open source enthusiast and more.",
+    url: "https://www.spznrf.dev",
     siteName: "Andrea F. Speziale",
     locale: "en_US",
     type: "website",
     images: [
       {
-        url: "https://www.andreafspeziale.is/og/home",
+        url: "https://www.spznrf.dev/og/home",
       },
     ],
   },

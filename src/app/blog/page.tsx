@@ -28,11 +28,11 @@ export default async function BlogPage() {
 
 export const metadata: Metadata = {
   title: "Blog",
-  description: "Writings on programming, computer science, and more.",
+  description: "Technical challenges I found along the way.",
   openGraph: {
     images: [
       {
-        url: "https://www.andreafspeziale.is/og/home?title=blog",
+        url: "https://www.spznrf.dev/og/home?title=blog",
       },
     ],
   },
