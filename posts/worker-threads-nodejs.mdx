@@ -1,0 +1,178 @@
+---
+title: "Worker Threads for CPU-Bound Workloads in Node.js"
+description: "Offloading the event loop."
+date: "June 2, 2026"
+---
+
+When you run a Node.js service at scale and the core of what it does is compute-heavy, you're going to hit the event loop ceiling eventually.
+
+Usually,
+
+> [*it starts with one thing, I don't know why...*](https://www.youtube.com/watch?v=eVTXPUF4Oz4)
+
+or at least a WTF!
+
+<img src="/blog/worker-threads-nodejs/1.png" alt="Stack copy for fixed size types" style={{maxWidth: '880px', width: '100%'}} />
+
+Symptoms are straightforward: latency increases, requests pile up, and the system becomes unresponsive. In Kubernetes, this often manifests as pods restarting due to liveness probe failures, even though memory and network metrics look fine. The CPU is maxed out on the main thread, blocking everything else.
+
+I recently faced this issue with an HTTP API that scores how similar a given text is to each result in a response set.
+
+H/v scaling is not the answer. A good profiling and thoughtful resource allocation is part of the game, but as a SW engineer the first thing you need to do is offload the heavy computations to a pool of [worker threads](https://nodejs.org/api/worker_threads.html), allowing the main thread to remain responsive for handling I/O, probes and other tasks.
+
+The pool service:
+
+```typescript
+@Injectable()
+export class WorkerPool implements OnModuleInit, OnModuleDestroy {
+  private workers: Worker[] = [];
+  private availableWorkers: Worker[] = [];
+  private taskQueue: WorkerTask[] = [];
+  private activeTimers = new Set<NodeJS.Timeout>();
+  private destroyed = false;
+
+  onModuleInit(): void {
+    const poolSize = this.configService.get('localConfig').WorkerPoolSize;
+    for (let i = 0; i < poolSize; i++) {
+      this.spawnWorker();
+    }
+  }
+
+  // ... private methods: runTask, spawnWorker, releaseWorker, drainQueue, replaceWorker ...
+
+  execute(payload: WorkerPayload): Promise<WorkerResult> {
+    if (this.destroyed) {
+      return Promise.reject(new Error('Worker pool is destroyed'));
+    }
+
+    return new Promise<WorkerResult>((resolve, reject) => {
+      const task: WorkerTask = { payload, resolve, reject };
+      const worker = this.availableWorkers.pop();
+
+      if (worker) {
+        this.runTask(worker, task);
+        return;
+      }
+
+      if (this.taskQueue.length >= this.maxQueueSize) {
+        reject(
+          buildHttpException(HttpStatus.SERVICE_UNAVAILABLE, [
+            'Service temporarily overloaded, please retry',
+          ]),
+        );
+        return;
+      }
+
+      this.taskQueue.push(task);
+    });
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    this.destroyed = true;
+
+    for (const timer of this.activeTimers) {
+      clearTimeout(timer);
+    }
+    this.activeTimers.clear();
+
+    await Promise.all(this.workers.map((worker) => worker.terminate()));
+
+    for (const task of this.taskQueue) {
+      task.reject(new Error('Worker pool shutting down'));
+    }
+
+    this.workers = [];
+    this.availableWorkers = [];
+    this.taskQueue = [];
+  }
+}
+```
+
+When all workers are busy and the queue is full, the service returns 503 immediately. Without this, under sustained load the queue grows unbounded, memory spikes, latency becomes unpredictable and the caller has no idea the service is degraded. A fast rejection lets upstream retry or shed load.
+
+The `destroyed` flag also guards `execute()`: once teardown starts, new tasks are rejected immediately rather than being queued to a dying pool.
+
+Each dispatched task gets a timer. Without it, a stalled worker (deadlock, infinite loop, blocked syscall) would hold a task forever, meaning the caller hangs, the worker is never replaced and pool capacity degrades silently. The `settled` flag prevents double-resolution when the timeout and the worker response race against each other:
+
+```typescript
+private runTask(worker: Worker, task: WorkerTask): void {
+  let settled = false;
+
+  const onMessage = (result: WorkerResult) => {
+    if (settled) return;
+    settled = true;
+    cleanup();
+    task.resolve(result);
+    this.releaseWorker(worker);
+  };
+
+  const timer = setTimeout(() => {
+    if (settled) return;
+    settled = true;
+    cleanup();
+    task.reject(new Error('Worker task timed out'));
+    this.replaceWorker(worker);
+  }, this.taskTimeoutMs);
+
+  worker.on('message', onMessage);
+  worker.on('error', onError);
+  worker.on('exit', onExit);
+  worker.postMessage(task.payload);
+}
+```
+
+Crashed workers get replaced automatically. But if spawning itself fails repeatedly (bad file path, OOM), we stop trying after `MAX_CONSECUTIVE_SPAWN_FAILURES` to avoid an infinite spawn loop.
+
+The worker runs in its own V8 isolate, it can saturate a full CPU core without affecting the main thread's ability to serve probes, accept connections, or dispatch other I/O. The implementation is minimal, it receives the payload, runs normalization, scores similarities and posts back:
+
+```typescript
+parentPort?.on('message', (payload: WorkerPayload) => {
+    // ... normalization logic ...
+    // ... similarity scoring ...
+
+  parentPort?.postMessage({ 
+    // ... result construction ...
+  });
+});
+```
+
+The pool is injected via constructor in the consuming service, no manual lifecycle management, the framework handles instantiation and shutdown:
+
+```typescript
+@Injectable()
+export class MyService {
+  constructor(
+    // ... other dependencies ...
+    private readonly workerPool: WorkerPool,
+  ) {}
+
+  async execute(payload: Payload): Promise<Result> {
+    // ... pre-processing ...
+
+    const { data: workerResult } = await withAsyncPerformance(() =>
+      this.workerPool.execute({
+        // ... payload construction ...
+      }),
+    );
+
+    // ... post-processing ...
+  }
+}
+```
+
+The deploy went out and the CPU spike pattern shifted from frequent full-core saturation to shorter, less frequent bursts. The event loop was no longer blocking on computation, so probe handlers could respond even under sustained load.
+
+`worker_threads` look simple: spawn a worker, post a message, get a result. In production you need to handle everything that happens between those steps:
+
+- workers crash (replace them)
+- workers hang (timeout and replace)
+- too many tasks arrive at once (backpressure, not unbounded queuing)
+- the service shuts down mid-task (reject pending, clear timers)
+- replacement itself can fail (circuit break)
+- timeout and message can race (settled flag)
+
+The pool pattern (pre-spawned long-lived workers with a task queue) amortizes the thread creation cost and keeps the implementation predictable. Three workers per pod with a 10-second task timeout handles our throughput. The numbers are configurable via environment variables, which matters when you run the same image in multiple environments with different traffic shapes.
+
+If the pool becomes the bottleneck, the next step is pushing the CPU-bound work below the JavaScript layer. The option that fits without rearchitecting is a native addon via [napi-rs](https://github.com/napi-rs/napi-rs) or [node-addon-api](https://github.com/nodejs/node-addon-api): the worker thread stays as-is and delegates the batch to native code that can parallelize the computation internally.
+
+**Hardcore?** Extract the workload entirely into a sidecar, communicating over a Unix socket or shared memory. Node becomes a thin proxy. The worker pool disappears, the sidecar owns the compute, and you can scale and deploy it independently.
