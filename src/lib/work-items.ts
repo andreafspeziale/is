@@ -11,7 +11,7 @@ export const workItems: WorkItem[] = [
     role: "staff product engineer",
     period: "2022 - now",
     description:
-      "creator of sentinel, a copyright detection system used by music generative ai companies like suno.com. originally hired to lead the core engineering team's node.js adoption, expanding into a zero-downtime migration from a 10+ year old elasticsearch cluster to opensearch, enabling new features and cost savings. in 2025 moved to the product growth engineering team, revamping the api-as-a-service offering unlocking new revenue streams, introducing our first internal mcp implementation for natural language opensearch queries and supporting the development of our music lens ai agent.",
+      "creator of sentinel, a copyright detection system used by music generative ai companies like suno.com. originally hired to lead the core engineering team's node.js adoption. expanded into a zero-downtime migration from a 10+ year old elasticsearch cluster to opensearch, enabling new features and cost savings. in 2025 moved to the product growth engineering team: revamped the api-as-a-service offering unlocking new revenue streams, introduced our first internal mcp implementation for natural language opensearch queries and supporting the development of our music lens ai agent.",
   },
   {
     title: "finleap",
