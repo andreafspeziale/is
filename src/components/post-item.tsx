@@ -17,7 +17,7 @@ export function PostItem({ post }: { post: MDXFileData }) {
           {post.metadata.title.toLowerCase()}
         </span>
         <span className="text-sm text-overlay0 leading-relaxed">
-          {post.metadata.description}
+          {post.metadata.description.toLowerCase()}
         </span>
         <span className="text-xs text-overlay0">
           {getReadingTime(post.content)}
