@@ -17,13 +17,23 @@ export default function WorkPage() {
       <div className="space-y-8">
         {workItems.map((item) => (
           <div key={item.title} className="rounded-lg p-4 -mx-4">
-            <h3 className="text-lg font-semibold text-text mb-2">
+            <h3 className="text-lg font-semibold text-text mb-4">
               {item.title}
             </h3>
-            <p className="text-sm text-overlay1 mb-3">
-              {item.role}
-              <span className="text-surface2"> · {item.period}</span>
-            </p>
+            <div className="relative pl-6 mb-4">
+              <div className="absolute left-[3px] top-2 bottom-2 border-l border-dashed border-surface2" />
+              {(item.roles ?? [{ role: item.role, period: item.period }]).map(
+                (role) => (
+                  <div key={`${role.role}-${role.period}`} className="relative mb-3 last:mb-0">
+                    <span className="absolute -left-6 top-1.5 h-2 w-2 rounded-full bg-accent accent-glow" />
+                    <p className="text-sm text-overlay1">
+                      {role.role}
+                      <span className="text-surface2"> · {role.period}</span>
+                    </p>
+                  </div>
+                ),
+              )}
+            </div>
             <p className="text-subtext0 text-pretty leading-relaxed">
               {item.description}
             </p>

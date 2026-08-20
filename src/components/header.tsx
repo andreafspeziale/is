@@ -10,7 +10,7 @@ export function Header() {
         </span>
       </h1>
       <p className="text-overlay1 animate-fade-in">
-        staff product engineer at musixmatch | italy
+        principal engineer at musixmatch | italy
       </p>
       <p className="text-pretty max-w-[52ch] animate-fade-in-up">
         obsessed with measurement, i mostly built backend systems and developer

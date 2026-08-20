@@ -18,8 +18,8 @@ export const metadata: Metadata = {
     default: "Andrea F. Speziale",
     template: "%s | Andrea F. Speziale",
   },
-  description: "Software engineer, open source enthusiast and more.",
-  keywords: ["Andrea F. Speziale", "Andrea Francesco Speziale", "spznrf", "Staff Engineer", "Musixmatch", "TypeScript", "Node.js"],
+  description: "Principal engineer, open source enthusiast and more.",
+  keywords: ["Andrea F. Speziale", "Andrea Francesco Speziale", "spznrf", "Principal Engineer", "Musixmatch", "TypeScript", "Node.js"],
   openGraph: {
     title: "Andrea F. Speziale",
     description: "Software engineer, open source enthusiast and more.",
