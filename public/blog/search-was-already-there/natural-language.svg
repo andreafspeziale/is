@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="380" height="116" viewBox="0 0 380 116" role="img" aria-labelledby="title description">
+  <title id="title">Natural language search</title>
+  <desc id="description">Human language passes through an LLM before reaching the search engine.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 6 3.5 0 7" fill="none" stroke="#aca1cf" stroke-width="1.5"/></marker>
+  </defs>
+  <style>
+    text { fill: #c9c7cd; font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace; font-size: 13px; }
+    .accent { fill: #b9aeda; font-weight: 600; }
+    .line { fill: none; stroke: #aca1cf; stroke-linecap: round; stroke-width: 1.5; }
+  </style>
+  <rect x="1" y="1" width="378" height="114" rx="6" fill="#131314" stroke="#2a2a2d" stroke-width="2"/>
+  <rect x="14" y="32" width="118" height="52" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="73" y="63" text-anchor="middle">human language</text>
+  <path class="line" d="M132 58h25" marker-end="url(#arrow)"/>
+  <rect x="157" y="32" width="66" height="52" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="190" y="63" text-anchor="middle" class="accent">LLM</text>
+  <path class="line" d="M223 58h25" marker-end="url(#arrow)"/>
+  <rect x="248" y="32" width="118" height="52" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="307" y="63" text-anchor="middle" class="accent">search engine</text>
+</svg>

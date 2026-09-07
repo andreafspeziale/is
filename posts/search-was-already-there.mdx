@@ -1,0 +1,195 @@
+---
+title: "Search Was Already There"
+description: "How a migration grew into an HTTP API, an MCP server and a CLI."
+date: "September 3, 2026"
+draft: "true"
+---
+
+I know, this is beautiful:
+
+<img src="/blog/search-was-already-there/se-platform.svg" alt="The se-platform projects: HTTP core, agent interface and terminal interface" style={{maxWidth: '380px', width: '100%', margin: 0}} />
+
+It is 2026. By now, this should feel like business as usual:
+
+> Why did this application start returning errors after the latest deployment?
+
+A few seconds later, your coding agent comes back with a possible explanation, the relevant log events and the structured query it used to find them.
+
+It did something like this:
+
+1. Discovered the available log indices
+2. Inspected the mapping of the most relevant one
+3. Translated the question into a search-engine query
+4. Executed it
+5. Read the results and explained what they probably meant
+
+<img src="/blog/search-was-already-there/1.png" alt="Coding agent discovering log indices through MCP" style={{maxWidth: '880px', width: '100%'}} />
+
+The search engine did not suddenly learn English. The **natural-language layer lives in the agent**, which received a small and explicit set of tools to understand and query an existing search engine.
+
+This is only the latest chapter. The story began much earlier, when I joined Musixmatch and took on a search-engine migration at a company where search is not merely a feature, but core infrastructure.
+
+We work with a large music catalog. Tracks, artists, lyrics and other entities have to be found, matched and continuously updated. Search is part of the machinery underneath many products and internal workflows.
+
+Anyone could draw the system like this:
+
+<img src="/blog/search-was-already-there/simple-search.svg" alt="Applications connecting directly to a search engine" style={{maxWidth: '380px', width: '100%', margin: 0}} />
+
+Technically correct, in the same way that drawing a rectangle and four circles is technically a car.
+
+The real picture was closer to this:
+
+<img src="/blog/search-was-already-there/search-ecosystem.svg" alt="Applications connecting to a search engine through schemas, transformations, access control, client configuration and operational concerns" style={{maxWidth: '380px', width: '100%', margin: 0}} />
+
+Repeat this integration across several backend applications and the elephant in the room becomes obvious: **the integration tax**.
+
+Giving one more application access to search sounds easy:
+
+> Just initialize the client and run the query.
+
+Unfortunately, `just` is doing some heavy lifting here.
+
+The application needs credentials, access rules and search-client configuration. Then it needs logging, error handling, timeouts, perhaps caching and enough documentation for the next person touching it six months later.
+
+Now repeat this for every application.
+
+<img src="/blog/search-was-already-there/integration-tax.svg" alt="Three applications repeating client configuration, access rules and operational work before reaching the search engine" style={{maxWidth: '380px', width: '100%', margin: 0}} />
+
+Repeating this setup duplicates engineering work and distributes search-engine knowledge and infrastructure permissions across the company.
+
+It also leaves a more uncomfortable question unanswered:
+
+> How do we express application-level access rules?
+
+Infrastructure permissions can say whether a workload may connect to a search cluster. More specific application-level rules belong closer to the application boundary.
+
+The idea became quite simple: **applications should not need to integrate with the search engine at all**. All they should need is an API key with agreed permissions and an HTTP endpoint.
+
+Here we go.
+
+<div style={{width: '100%', maxWidth: '560px', margin: '0 auto', aspectRatio: '16 / 10', position: 'relative'}}>
+  <iframe
+    src="https://giphy.com/embed/sxZCZNYqdEMec"
+    title="The Joker saying here we go"
+    width="100%"
+    height="100%"
+    style={{position: 'absolute', inset: 0}}
+    frameBorder="0"
+    loading="lazy"
+    allowFullScreen
+  />
+</div>
+
+<p><a href="https://giphy.com/gifs/giphyqa-sxZCZNYqdEMec">via GIPHY</a></p>
+
+`se-api` began as a small HTTP service that received an HTTP request and executed a read operation on the search engine.
+
+That makes it a proxy, but calling it only a proxy hides the useful part.
+
+The service creates two separate access layers:
+
+1. **Infrastructure access:** the service manages a limited connection to the search engine
+2. **Application access:** API-key policies decide which capabilities and indices a caller may use
+
+<img src="/blog/search-was-already-there/access-layers.svg" alt="Application policies controlling endpoint and index permissions before se-api uses its managed search-engine connection" style={{maxWidth: '380px', width: '100%', margin: 0}} />
+
+The caller does not manage search-engine credentials, permissions or a vendor-specific client in every environment. It simply makes an HTTP request.
+
+At the boundary we can consistently provide:
+
+- Application-level authentication and authorization
+- Request logs and usage accounting
+- Caching where it is safe
+- Normalized errors instead of leaking raw client failures
+- Performance measurements and documentation
+
+This is a useful property of boring HTTP boundaries. HTTP is widely supported across languages and runtimes, while access can be scoped by operation and index. An application may inspect the mapping and search a specific index without being allowed to list all indices or perform those operations on any other one.
+
+Conceptually, its API looked like this:
+
+```text
+listIndices()
+getMapping(index)
+search(index, query)
+```
+
+The search endpoint deliberately remained a **governed pass-through**. I did not want to replace an expressive query language with a collection of premature product-specific endpoints. The service validates access and owns the operational concerns, but callers can still use the capabilities of the engine.
+
+This choice later became unexpectedly important. A human familiar with a search index may already know that `created_at` is a date, `status` is a keyword and `message` is full text. An agent does not know any of that unless we tell it.
+
+If you give a language model only a generic `search(query)` tool, it can confidently generate an impressive piece of invalid JSON using fields that never existed.
+
+To build a query, the agent needs a small discovery loop:
+
+<img src="/blog/search-was-already-there/discovery-loop.svg" alt="Agent discovery loop from listing indices through searching and interpreting results" style={{maxWidth: '380px', width: '100%', margin: 0}} />
+
+The supposedly secondary endpoints, index listing and mapping retrieval, turned out to be what made natural-language access practical.
+
+The model can reason over the schema, select plausible fields and translate a sentence into the engine query language. The engine remains deterministic search infrastructure while **the model acts as an interpreter between human intent and that infrastructure**.
+
+Or, in shorter terms:
+
+<img src="/blog/search-was-already-there/natural-language.svg" alt="Human language becoming a structured query through an LLM rather than a magic search engine" style={{maxWidth: '380px', width: '100%', margin: 0}} />
+
+Not:
+
+<img src="/blog/search-was-already-there/magic-search.svg" alt="Human language passing directly into a magic search engine" style={{maxWidth: '380px', width: '100%', margin: 0}} />
+
+Once the HTTP boundary existed, the next interfaces became adapters rather than new search implementations.
+
+<img src="/blog/search-was-already-there/adapters.svg" alt="Applications using HTTP, agents using MCP and humans or workers using the CLI to reach se-api" style={{maxWidth: '380px', width: '100%', margin: 0}} />
+
+We mentioned the HTTP service owns authorization, search-engine connectivity and more. The MCP adapter does not reimplement those. It exposes the core operations as tools with machine-readable schemas and descriptions, built at startup. The descriptions are part of the interface the model reads, they give it a governed toolbox rather than a shell into the search cluster.
+
+This works well when an agent supports MCP natively, but not all of them do. Some prefer CLIs. Looking at you, [Pi](https://pi.dev) &lt;3.
+
+Humans also tend to enjoy terminals for reasons psychologists may investigate in the future. The CLI fills both gaps, bringing the same platform to engineers, shell scripts and coding agents that can execute commands but cannot connect to an MCP server.
+
+The `se-api-cli` adapter ships as `sea-cli`:
+
+```text
+~ sea-cli
+Usage: sea-cli [options] [command]
+
+CLI for the Musixmatch search-engine API
+
+Options:
+  -V, --version             output the version number
+  -h, --help                display help for command
+
+Commands:
+  health|hc [options]       check se-api and its dependencies
+  indices|i [options]       list indices and aliases
+  mapping|m [options]       get an index mapping
+  search|s [options]        query an index
+  ***********|** [options]  super secret [REDACTED]
+  help [command]            display help for command
+```
+
+<img src="/blog/search-was-already-there/2.png" alt="Coding agent discovering and using sea-cli" style={{maxWidth: '880px', width: '100%'}} />
+
+The CLI accepts only known environment-target pairs, making it less error-prone for both humans and agents. Better DX and AX (am I coining "Agent Experience" here?). Results go to standard output and optional diagnostics go to standard error.
+
+The CLI is not another source of truth, just another way into the same HTTP capability.
+
+The first natural-language workflows searched catalog data. Once an agent understood an index mapping, it could translate a question into filters, ranges and aggregations.
+
+Logs were the next obvious thing to search. Their mappings can be discovered in the same way, and their query mechanics are familiar. Dashboards still have their place, but they are not always the best interface for an exploratory conversation.
+
+Catalog data and logs have different data models, but they use the same search interface.
+
+I only realized we already had a platform when the components came together under one name: `se-platform`. I did not sit down on day one and decide to create one. That is what happens most of the time in SWE.
+
+> **Quick OT:** this is one of the hardest parts of approaches like spec-driven development. They ask for many decisions upfront, making us worry about the whole system before the first useful thing exists. Let's be honest, it can be exhausting and a good recipe for burnout.
+
+I joined a migration and spent a long time learning where search behavior was hiding. The rest emerged one useful boundary at a time.
+
+The sequence matters:
+
+<img src="/blog/search-was-already-there/evolution.svg" alt="The evolution from search-engine migration to se-platform" style={{maxWidth: '380px', width: '100%', margin: 0}} />
+
+Starting from "please stop making every application configure the same client and permissions" was less glamorous, but led to fewer upfront decisions, fewer abstractions and more working endpoints.
+
+> The platform was not the search engine. It was the agreement around how we use it.
+
+Search was already there.
