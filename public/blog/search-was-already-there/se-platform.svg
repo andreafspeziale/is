@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="380" height="390" viewBox="0 0 380 390" role="img" aria-labelledby="title description">
+  <title id="title">se-platform projects</title>
+  <desc id="description">The se-platform contains an HTTP core, an agent interface and a terminal interface.</desc>
+  <style>
+    text { fill: #c9c7cd; font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace; font-size: 14px; }
+    .name { fill: #b9aeda; font-weight: 600; }
+    .role { fill: #9998a8; }
+    .line { fill: none; stroke: #aca1cf; stroke-linecap: round; stroke-width: 1.5; }
+  </style>
+  <rect x="1" y="1" width="378" height="388" rx="6" fill="#131314" stroke="#2a2a2d" stroke-width="2"/>
+  <text x="28" y="40" class="name">se-platform/</text>
+  <path class="line" d="M34 58v276M34 102h18M34 202h18M34 302h18"/>
+
+  <rect x="52" y="68" width="300" height="68" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="72" y="98" class="name">se-api/</text>
+  <text x="72" y="121" class="role">HTTP core</text>
+
+  <rect x="52" y="168" width="300" height="68" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="72" y="198" class="name">se-api-mcp/</text>
+  <text x="72" y="221" class="role">Agent interface</text>
+
+  <rect x="52" y="268" width="300" height="68" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="72" y="298" class="name">se-api-cli/</text>
+  <text x="72" y="321" class="role">Terminal interface</text>
+</svg>
