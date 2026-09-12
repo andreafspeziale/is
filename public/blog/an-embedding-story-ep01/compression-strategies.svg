@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="380" height="390" viewBox="0 0 380 390" role="img" aria-labelledby="title description">
+  <title id="title">First-stage compression strategies</title>
+  <desc id="description">The Hugging Face demo compresses 1024 dimensions into signs and uses Hamming distance. The alternative keeps 128 Matryoshka dimensions, quantizes them to int8 and uses cosine distance in Redis. Both require 128 bytes per vector.</desc>
+  <style>
+    text { fill: #c9c7cd; font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace; font-size: 14px; }
+    .muted { fill: #9998a8; font-size: 12px; }
+    .accent { fill: #b9aeda; font-weight: 600; }
+  </style>
+  <rect x="1" y="1" width="378" height="388" rx="6" fill="#131314" stroke="#2a2a2d" stroke-width="2"/>
+
+  <rect x="28" y="28" width="324" height="140" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="52" y="58" class="accent">HF demo</text>
+  <text x="52" y="86">1024 dimensions</text>
+  <text x="52" y="110">sign of each dimension</text>
+  <text x="52" y="136" class="muted">1024 bits · Hamming distance</text>
+  <text x="328" y="58" text-anchor="end" class="accent">128 B</text>
+
+  <rect x="28" y="192" width="324" height="140" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="52" y="222" class="accent">my variant</text>
+  <text x="52" y="250">first 128 dimensions</text>
+  <text x="52" y="274">Matryoshka + int8</text>
+  <text x="52" y="300" class="muted">Redis · cosine distance</text>
+  <text x="328" y="222" text-anchor="end" class="accent">128 B</text>
+
+  <text x="190" y="365" text-anchor="middle" class="muted">same memory budget, different strategy</text>
+</svg>

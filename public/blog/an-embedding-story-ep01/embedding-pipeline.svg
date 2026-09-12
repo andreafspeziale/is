@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="380" height="650" viewBox="0 0 380 650" role="img" aria-labelledby="title description">
+  <title id="title">Embedding retrieval pipeline</title>
+  <desc id="description">Eighteen million lyrics are encoded with Qwen3. One branch creates a 128-dimensional int8 Redis index for candidate retrieval. Another stores 1024-dimensional int8 vectors on SSD for precise rescoring and ten final results.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 6 3.5 0 7" fill="none" stroke="#aca1cf" stroke-width="1.5"/></marker>
+  </defs>
+  <style>
+    text { fill: #c9c7cd; font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace; font-size: 14px; }
+    .muted { fill: #9998a8; font-size: 12px; }
+    .accent { fill: #b9aeda; font-weight: 600; }
+    .line { fill: none; stroke: #aca1cf; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.5; }
+  </style>
+  <rect x="1" y="1" width="378" height="648" rx="6" fill="#131314" stroke="#2a2a2d" stroke-width="2"/>
+
+  <rect x="40" y="24" width="300" height="58" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="190" y="59" text-anchor="middle" class="accent">17.8M lyrics · all languages</text>
+  <path class="line" d="M190 82v36" marker-end="url(#arrow)"/>
+
+  <rect x="40" y="118" width="300" height="74" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="190" y="149" text-anchor="middle" class="accent">Qwen3-Embedding-4B</text>
+  <text x="190" y="173" text-anchor="middle" class="muted">float32 · 1024 dimensions</text>
+
+  <path class="line" d="M190 192v36M190 228H95v30M190 228h95v30"/>
+  <path class="line" d="M95 258v1" marker-end="url(#arrow)"/>
+  <path class="line" d="M285 258v1" marker-end="url(#arrow)"/>
+
+  <rect x="20" y="266" width="150" height="108" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="95" y="296" text-anchor="middle" class="accent">Redis</text>
+  <text x="95" y="320" text-anchor="middle">128 dims · int8</text>
+  <text x="95" y="344" text-anchor="middle" class="muted">HNSW · cosine</text>
+
+  <rect x="210" y="266" width="150" height="108" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="285" y="296" text-anchor="middle" class="accent">SSD</text>
+  <text x="285" y="320" text-anchor="middle">1024 dims · int8</text>
+  <text x="285" y="344" text-anchor="middle" class="muted">precise vectors</text>
+
+  <path class="line" d="M95 374v54h95M285 374v54h-95M190 428v36" marker-end="url(#arrow)"/>
+  <text x="190" y="414" text-anchor="middle" class="muted">top-40 candidates</text>
+
+  <rect x="40" y="464" width="300" height="72" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="190" y="494" text-anchor="middle" class="accent">precise rescore</text>
+  <text x="190" y="518" text-anchor="middle" class="muted">float32 query × int8 candidates</text>
+  <path class="line" d="M190 536v36" marker-end="url(#arrow)"/>
+
+  <rect x="40" y="572" width="300" height="54" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="190" y="605" text-anchor="middle" class="accent">top-10 results</text>
+</svg>

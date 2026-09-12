@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="380" height="520" viewBox="0 0 380 520" role="img" aria-labelledby="title description">
+  <title id="title">Two-stage quantized retrieval</title>
+  <desc id="description">Binary vectors are scanned with Hamming distance to select forty candidates, which are loaded as int8 vectors, rescored with a dot product and reduced to ten final results.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 6 3.5 0 7" fill="none" stroke="#aca1cf" stroke-width="1.5"/></marker>
+  </defs>
+  <style>
+    text { fill: #c9c7cd; font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace; font-size: 14px; }
+    .muted { fill: #9998a8; font-size: 12px; }
+    .accent { fill: #b9aeda; font-weight: 600; }
+    .line { fill: none; stroke: #aca1cf; stroke-linecap: round; stroke-width: 1.5; }
+  </style>
+  <rect x="1" y="1" width="378" height="518" rx="6" fill="#131314" stroke="#2a2a2d" stroke-width="2"/>
+
+  <rect x="40" y="28" width="300" height="72" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="190" y="57" text-anchor="middle" class="accent">41M binary vectors</text>
+  <text x="190" y="81" text-anchor="middle" class="muted">in RAM · ~5.2 GB</text>
+  <path class="line" d="M190 100v42" marker-end="url(#arrow)"/>
+  <text x="205" y="124" class="muted">Hamming scan</text>
+
+  <rect x="40" y="142" width="300" height="64" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="190" y="181" text-anchor="middle">top-40 candidates</text>
+  <path class="line" d="M190 206v42" marker-end="url(#arrow)"/>
+  <text x="205" y="230" class="muted">load 40 KB from disk</text>
+
+  <rect x="40" y="248" width="300" height="72" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="190" y="277" text-anchor="middle" class="accent">precise rescore</text>
+  <text x="190" y="301" text-anchor="middle" class="muted">float32 × int8 dot product</text>
+  <path class="line" d="M190 320v42" marker-end="url(#arrow)"/>
+
+  <rect x="40" y="362" width="300" height="64" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="190" y="401" text-anchor="middle" class="accent">top-10 results</text>
+
+  <text x="190" y="472" text-anchor="middle" class="muted">fast scan → precise ranking</text>
+</svg>
