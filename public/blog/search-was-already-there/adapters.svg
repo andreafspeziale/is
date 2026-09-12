@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="380" height="430" viewBox="0 0 380 430" role="img" aria-labelledby="title description">
+  <title id="title">Three interfaces into se-api</title>
+  <desc id="description">Applications use HTTP, agents use MCP and humans or workers use the CLI to reach se-api and its search engine targets.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 6 3.5 0 7" fill="none" stroke="#aca1cf" stroke-width="1.5"/></marker>
+  </defs>
+  <style>
+    text { fill: #c9c7cd; font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace; font-size: 14px; }
+    .muted { fill: #9998a8; }
+    .accent { fill: #b9aeda; font-weight: 600; }
+    .line { fill: none; stroke: #aca1cf; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.5; }
+  </style>
+  <rect x="1" y="1" width="378" height="428" rx="6" fill="#131314" stroke="#2a2a2d" stroke-width="2"/>
+  <rect x="24" y="32" width="150" height="62" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="99" y="58" text-anchor="middle">applications</text><text x="99" y="80" text-anchor="middle" class="muted">HTTP</text>
+  <rect x="24" y="119" width="150" height="62" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="99" y="145" text-anchor="middle">agents</text><text x="99" y="167" text-anchor="middle" class="muted">MCP</text>
+  <rect x="24" y="206" width="150" height="62" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="99" y="232" text-anchor="middle">humans · workers</text><text x="99" y="254" text-anchor="middle" class="muted">CLI</text>
+
+  <path class="line" d="M174 63h31v87M174 150h31M174 237h31v-87"/>
+  <path class="line" d="M205 150h25" marker-end="url(#arrow)"/>
+  <rect x="230" y="119" width="126" height="62" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="293" y="156" text-anchor="middle" class="accent">se-api</text>
+  <path class="line" d="M293 181v143" marker-end="url(#arrow)"/>
+  <rect x="70" y="324" width="286" height="72" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="213" y="355" text-anchor="middle">search-engine targets</text>
+  <text x="213" y="379" text-anchor="middle" class="muted">catalog · logs</text>
+</svg>

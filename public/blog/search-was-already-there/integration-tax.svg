@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="380" height="520" viewBox="0 0 380 520" role="img" aria-labelledby="title description">
+  <title id="title">Repeated search integration</title>
+  <desc id="description">Three applications repeat client configuration, access rules and operational work before reaching the search engine.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 6 3.5 0 7" fill="none" stroke="#aca1cf" stroke-width="1.5"/></marker>
+  </defs>
+  <style>
+    text { fill: #c9c7cd; font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace; font-size: 14px; }
+    .muted { fill: #9998a8; }
+    .accent { fill: #b9aeda; font-weight: 600; }
+    .line { fill: none; stroke: #aca1cf; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.5; }
+  </style>
+  <rect x="1" y="1" width="378" height="518" rx="6" fill="#131314" stroke="#2a2a2d" stroke-width="2"/>
+  <text x="28" y="38" class="muted">the same integration, repeated</text>
+
+  <path class="line" d="M28 58v324M28 104h20M28 214h20M28 324h20"/>
+  <rect x="48" y="64" width="286" height="80" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="70" y="94" class="accent">application A</text>
+  <text x="70" y="120">client config · access rules</text>
+  <text x="70" y="138">operations</text>
+
+  <rect x="48" y="174" width="286" height="80" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="70" y="204" class="accent">application B</text>
+  <text x="70" y="230">client config · access rules</text>
+  <text x="70" y="248">operations</text>
+
+  <rect x="48" y="284" width="286" height="80" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="70" y="314" class="accent">application C</text>
+  <text x="70" y="340">client config · access rules</text>
+  <text x="70" y="358">operations</text>
+
+  <path class="line" d="M28 382v34h162v32" marker-end="url(#arrow)"/>
+  <rect x="70" y="448" width="240" height="52" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="190" y="480" text-anchor="middle" class="accent">search engine</text>
+</svg>
