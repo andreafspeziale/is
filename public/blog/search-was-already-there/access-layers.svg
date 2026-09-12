@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="380" height="286" viewBox="0 0 380 286" role="img" aria-labelledby="title description">
+  <title id="title">Two search access layers</title>
+  <desc id="description">A caller reaches se-api through application access. Se-api reaches the search engine through infrastructure access.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 6 3.5 0 7" fill="none" stroke="#aca1cf" stroke-width="1.5"/></marker>
+  </defs>
+  <style>
+    text { fill: #c9c7cd; font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace; font-size: 14px; }
+    .muted { fill: #9998a8; font-size: 12px; }
+    .accent { fill: #b9aeda; font-weight: 600; }
+    .line { fill: none; stroke: #aca1cf; stroke-linecap: round; stroke-width: 1.5; }
+  </style>
+  <rect x="1" y="1" width="378" height="284" rx="6" fill="#131314" stroke="#2a2a2d" stroke-width="2"/>
+
+  <text x="20" y="30" class="muted">application access</text>
+  <rect x="20" y="48" width="130" height="62" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="85" y="75" text-anchor="middle">caller</text>
+  <text x="85" y="96" text-anchor="middle" class="muted">API key</text>
+  <path class="line" d="M150 79h80" marker-end="url(#arrow)"/>
+  <rect x="230" y="48" width="130" height="62" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="295" y="84" text-anchor="middle" class="accent">se-api</text>
+
+  <text x="20" y="166" class="muted">infrastructure access</text>
+  <rect x="20" y="184" width="130" height="62" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="85" y="221" text-anchor="middle" class="accent">se-api</text>
+  <path class="line" d="M150 215h80" marker-end="url(#arrow)"/>
+  <rect x="230" y="184" width="130" height="62" rx="5" fill="#161617" stroke="#3e3e43"/>
+  <text x="295" y="221" text-anchor="middle" class="accent">search engine</text>
+</svg>
