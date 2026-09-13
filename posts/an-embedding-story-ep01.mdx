@@ -88,23 +88,7 @@ You can think of embeddings as numerical representations of words, sentences and
 
 These numbers can be seen as the coordinates of the sentence in a multidimensional space. The closer two sentences are in meaning, the closer their vectors will be geometrically.
 
-```
-Multidimensional Space
-
-                          ● AI is transforming industries
-
-
-
-                 ● Data is the new oil
-              ● Information is the new oil
-
-
-
-
-
-
-● How to bake a cake
-```
+<img src="/blog/an-embedding-story-ep01/multidimensional-space.svg" alt="Semantically related sentences placed close together in a multidimensional space" style={{maxWidth: '380px', width: '100%', margin: 0}} />
 
 To generate them, we need an embedding model. It's a specialized neural network, often derived from the same architectures behind modern LLMs, trained to represent text as coordinates in a multidimensional space.
 
@@ -195,20 +179,7 @@ At this point, you would expect that compressing vectors by up to 32x would comp
 
 The demo and blog post propose combining both levels into a two-stage architecture that almost fully recovers the precision lost in compression:
 
-```
-41M binary vectors (in RAM, ~5.2 GB)
-      │
-      │ Hamming distance against the query → extremely fast, scans all 41M
-      ▼
-   top-40 candidates
-      │
-      │ Load only 40 int8 vectors from disk (40 * 1024 bytes = 40 KB I/O)
-      ▼
-   precise rescore (dot product: float32 * int8)
-      │
-      ▼
-   top-10 final results
-```
+<img src="/blog/an-embedding-story-ep01/two-stage-retrieval.svg" alt="Two-stage retrieval using a fast Hamming scan followed by a precise dot-product rescore" style={{maxWidth: '380px', width: '100%', margin: 0}} />
 
 The first stage uses the most compressed representation (binary) to eliminate 99.99% of irrelevant documents. The second stage retrieves only the surviving 40 candidates in their higher-precision `int8` form and re-ranks them.
 
@@ -250,15 +221,7 @@ Certain embedding models are trained so that the first N dimensions of the vecto
 
 Think of it like a Russian nesting doll: the smaller version inside still looks like the original.
 
-```
-HF demo (first stage):
-  1024 dims → sign of each dim (1 bit) → 1024 bits = 128 bytes
-  Distance: Hamming
-
-My variant (first stage):
-  1024 dims → first 128 dims (Matryoshka) → quantize to int8 → 128 bytes
-  Distance: cosine (Redis)
-```
+<img src="/blog/an-embedding-story-ep01/compression-strategies.svg" alt="Two first-stage compression strategies using the same 128-byte memory budget" style={{maxWidth: '380px', width: '100%', margin: 0}} />
 
 Same memory budget (`128 bytes` per vector), different compression strategy. The HF demo discards magnitude information (keeping only the sign). My variant discards the less-important dimensions (keeping the most informative ones, thanks to Matryoshka training).
 
@@ -276,22 +239,7 @@ The trade-off here is speed. 4B parameters means ~12x slower than the 335M param
 
 The pipeline looks like this:
 
-```
-17.8M lyrics (all languages)
-      │
-      │  Qwen3-Embedding-4B → float32, 1024 dims (Matryoshka from 2560)
-      │
-      ├─── truncate to 128 dims + quantize int8 ──→ Redis (HNSW, cosine)
-      │                                                  │
-      │                                              top-40 candidates
-      │                                                  │
-      └─── quantize int8, 1024 dims (on SSD) ────────────┤
-                                                         ▼
-                                          dot product: float32 query × int8 candidates
-                                                         │
-                                                         ▼
-                                                    top-10 results
-```
+<img src="/blog/an-embedding-story-ep01/embedding-pipeline.svg" alt="Embedding pipeline from 17.8 million lyrics through Redis candidate retrieval and precise rescoring" style={{maxWidth: '380px', width: '100%', margin: 0}} />
 
 Before running any embedding, I needed the raw lyrics in a format suitable for batch processing on the desktop GPU.
 
@@ -307,13 +255,7 @@ The full dataset sits at ~10 GB on disk, as CSV it would be 35-40 GB.
 
 Being columnar also means selective reads. When I only need IDs and language codes (for example, to count how many English tracks I have), Parquet skips the lyrics entirely. This turned out useful more than once.
 
-```
-data/
-└── all/
-    ├── lyrics_chunk001.parquet
-    ├── lyrics_chunk002.parquet
-    └── ... (36 files, ~500K rows each)
-```
+<img src="/blog/an-embedding-story-ep01/parquet-files.svg" alt="Parquet dataset split into 36 files of approximately 500 thousand rows" style={{maxWidth: '380px', width: '100%', margin: 0}} />
 
 With the data on disk, the next step was straightforward. I copied the files to an external drive and plugged it into the desktop.
 
@@ -323,19 +265,7 @@ With that infernal contraption, I had to set up a `python` environment from scra
 
 PyTorch is Meta's open-source framework for GPU-accelerated matrix operations. A neural network like `Qwen3-Embedding-4B` is, at its core, a sequence of matrix multiplications. When you feed it a text:
 
-```
-"I walk in the rain"
-       ↓
-[tokenization → numbers]
-       ↓
-[weight matrix layer 1] × [input] → [output layer 1]
-       ↓
-[weight matrix layer 2] × [output layer 1] → [output layer 2]
-       ↓
-... (36 layers for Qwen3-4B) ...
-       ↓
-[final embedding vector: 1024 float32 numbers]
-```
+<img src="/blog/an-embedding-story-ep01/neural-network-flow.svg" alt="A sentence passing through tokenization and neural network layers to become an embedding vector" style={{maxWidth: '380px', width: '100%', margin: 0}} />
 
 Each layer is a large matrix multiplication. `Qwen3-4B` has 4 billion parameters, 4 billion numbers spread across these matrices.
 

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="380" height="236" viewBox="0 0 380 236" role="img" aria-labelledby="title description">
+  <title id="title">Parquet dataset files</title>
+  <desc id="description">The data directory contains an all directory with thirty-six Parquet chunks of approximately five hundred thousand rows each.</desc>
+  <style>
+    text { fill: #c9c7cd; font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace; font-size: 14px; }
+    .muted { fill: #9998a8; font-size: 12px; }
+    .accent { fill: #b9aeda; font-weight: 600; }
+    .line { fill: none; stroke: #aca1cf; stroke-linecap: round; stroke-width: 1.5; }
+  </style>
+  <rect x="1" y="1" width="378" height="234" rx="6" fill="#131314" stroke="#2a2a2d" stroke-width="2"/>
+  <text x="28" y="40" class="accent">data/</text>
+  <path class="line" d="M34 58v128M34 78h22"/>
+  <text x="70" y="83" class="accent">all/</text>
+  <path class="line" d="M76 99v87M76 116h22M76 152h22M76 186h22"/>
+  <text x="112" y="121">lyrics_chunk001.parquet</text>
+  <text x="112" y="157">lyrics_chunk002.parquet</text>
+  <text x="112" y="191">... 36 files</text>
+  <text x="112" y="213" class="muted">~500K rows each</text>
+</svg>

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="380" height="360" viewBox="0 0 380 360" role="img" aria-labelledby="title description">
+  <title id="title">Multidimensional semantic space</title>
+  <desc id="description">Data is the new oil and Information is the new oil are close together. AI is transforming industries is nearby, while How to bake a cake is far away.</desc>
+  <style>
+    text { fill: #c9c7cd; font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace; font-size: 13px; }
+    .muted { fill: #9998a8; }
+    .accent { fill: #b9aeda; }
+    .point { fill: #aca1cf; }
+  </style>
+  <rect x="1" y="1" width="378" height="358" rx="6" fill="#131314" stroke="#2a2a2d" stroke-width="2"/>
+  <text x="24" y="38" class="muted">multidimensional space</text>
+
+  <circle cx="214" cy="98" r="5" class="point"/>
+  <text x="228" y="103">AI is transforming</text>
+  <text x="228" y="122">industries</text>
+
+  <circle cx="170" cy="184" r="5" class="point"/>
+  <text x="184" y="189" class="accent">Data is the new oil</text>
+
+  <circle cx="154" cy="213" r="5" class="point"/>
+  <text x="168" y="218" class="accent">Information is the</text>
+  <text x="168" y="237" class="accent">new oil</text>
+
+  <circle cx="50" cy="303" r="5" class="point"/>
+  <text x="64" y="308">How to bake a cake</text>
+</svg>
