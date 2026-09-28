@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="380" height="216" viewBox="0 0 380 216" role="img" aria-labelledby="title description">
+  <title id="title">Pi team layout</title>
+  <desc id="description">Aragorn and Bilbo occupy the top row. Samwise, Gandalf and Legolas occupy the bottom row.</desc>
+  <style>
+    text { fill: #c9c7cd; font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace; font-size: 14px; }
+    .muted { fill: #9998a8; font-size: 12px; }
+    .accent { fill: #b9aeda; font-weight: 600; }
+    .pane { fill: #161617; stroke: #3e3e43; }
+  </style>
+  <rect x="1" y="1" width="378" height="214" rx="6" fill="#131314" stroke="#2a2a2d" stroke-width="2"/>
+
+  <rect class="pane" x="20" y="24" width="204" height="72" rx="5"/>
+  <text x="122" y="54" text-anchor="middle" class="accent">Aragorn</text>
+  <text x="122" y="77" text-anchor="middle" class="muted">main</text>
+
+  <rect class="pane" x="236" y="24" width="124" height="72" rx="5"/>
+  <text x="298" y="54" text-anchor="middle" class="accent">Bilbo</text>
+  <text x="298" y="77" text-anchor="middle" class="muted">documenter</text>
+
+  <rect class="pane" x="20" y="120" width="106" height="72" rx="5"/>
+  <text x="73" y="150" text-anchor="middle" class="accent">Samwise</text>
+  <text x="73" y="173" text-anchor="middle" class="muted">qa</text>
+
+  <rect class="pane" x="137" y="120" width="106" height="72" rx="5"/>
+  <text x="190" y="150" text-anchor="middle" class="accent">Gandalf</text>
+  <text x="190" y="173" text-anchor="middle" class="muted">reviewer</text>
+
+  <rect class="pane" x="254" y="120" width="106" height="72" rx="5"/>
+  <text x="307" y="150" text-anchor="middle" class="accent">Legolas</text>
+  <text x="307" y="173" text-anchor="middle" class="muted">ops-recon</text>
+</svg>

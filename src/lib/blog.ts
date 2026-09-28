@@ -96,7 +96,10 @@ export function getAdjacentPosts(slug: string): {
 }
 
 export function getReadingTime(content: string): string {
-  const words = content.trim().split(/\s+/).length
+  const words = content
+    .replace(/<details\b[^>]*>[\s\S]*?<\/details>/gi, "")
+    .trim()
+    .split(/\s+/).length
   const minutes = Math.max(1, Math.round(words / 225))
   return `${minutes} min read`
 }
