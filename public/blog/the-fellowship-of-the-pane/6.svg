@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="380" height="278" viewBox="0 0 380 278" role="img" aria-labelledby="title description">
+  <title id="title">AI session cost breakdown</title>
+  <desc id="description">Main used 5.6 Sol and cost 2.901 dollars. Documenter used 5.6 Luna and cost 0.011 dollars. Reviewer used 5.6 Sol and cost 0.973 dollars. QA used 5.6 Luna and cost 0.076 dollars. Ops Recon used 5.6 Sol and cost 1.842 dollars. Total cost was 5.803 dollars with a weighted cache hit rate of 97.4 percent.</desc>
+  <style>
+    text { fill: #c9c7cd; font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace; font-size: 12px; }
+    .title { fill: #b9aeda; font-size: 14px; font-weight: 600; }
+    .header { fill: #9998a8; font-size: 11px; }
+    .accent { fill: #b9aeda; font-weight: 600; }
+    .line { stroke: #3e3e43; stroke-width: 1; }
+  </style>
+  <rect x="1" y="1" width="378" height="276" rx="6" fill="#131314" stroke="#2a2a2d" stroke-width="2"/>
+
+  <text x="20" y="32" class="title">AI session cost</text>
+  <text x="20" y="60" class="header">session</text>
+  <text x="152" y="60" class="header">model</text>
+  <text x="276" y="60" text-anchor="end" class="header">cost</text>
+  <text x="360" y="60" text-anchor="end" class="header">cache</text>
+  <path class="line" d="M20 70h340"/>
+
+  <text x="20" y="94">Main</text>
+  <text x="152" y="94">5.6 Sol</text>
+  <text x="276" y="94" text-anchor="end">$2.901</text>
+  <text x="360" y="94" text-anchor="end">97.7%</text>
+
+  <text x="20" y="124">Documenter</text>
+  <text x="152" y="124">5.6 Luna</text>
+  <text x="276" y="124" text-anchor="end">$0.011</text>
+  <text x="360" y="124" text-anchor="end">81.7%</text>
+
+  <text x="20" y="154">Reviewer</text>
+  <text x="152" y="154">5.6 Sol</text>
+  <text x="276" y="154" text-anchor="end">$0.973</text>
+  <text x="360" y="154" text-anchor="end">92.3%</text>
+
+  <text x="20" y="184">QA</text>
+  <text x="152" y="184">5.6 Luna</text>
+  <text x="276" y="184" text-anchor="end">$0.076</text>
+  <text x="360" y="184" text-anchor="end">96.5%</text>
+
+  <text x="20" y="214">Ops Recon</text>
+  <text x="152" y="214">5.6 Sol</text>
+  <text x="276" y="214" text-anchor="end">$1.842</text>
+  <text x="360" y="214" text-anchor="end">98.7%</text>
+
+  <path class="line" d="M20 228h340"/>
+  <text x="20" y="252" class="accent">total</text>
+  <text x="276" y="252" text-anchor="end" class="accent">$5.803</text>
+  <text x="360" y="252" text-anchor="end" class="accent">97.4%</text>
+</svg>

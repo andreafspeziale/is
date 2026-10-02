@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="380" height="142" viewBox="0 0 380 142" role="img" aria-labelledby="title description">
+  <title id="title">Herdr Pi team plugin files</title>
+  <desc id="description">The Pi team plugin directory contains the Herdr plugin manifest and setup script.</desc>
+  <style>
+    text { fill: #c9c7cd; font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace; font-size: 14px; }
+    .accent { fill: #b9aeda; font-weight: 600; }
+    .line { fill: none; stroke: #aca1cf; stroke-linecap: round; stroke-width: 1.5; }
+  </style>
+  <rect x="1" y="1" width="378" height="140" rx="6" fill="#131314" stroke="#2a2a2d" stroke-width="2"/>
+  <text x="20" y="36" class="accent">~/.config/herdr/plugins/pi-team/</text>
+  <path class="line" d="M34 54v62M34 76h22M34 110h22"/>
+  <text x="70" y="81">herdr-plugin.toml</text>
+  <text x="70" y="115">setup.sh</text>
+</svg>

@@ -1,0 +1,480 @@
+---
+title: "The Fellowship of the Pane"
+description: "How I use Pi and Herdr to ship before everything changes, again."
+date: "October 3, 2026"
+---
+
+Becca, a close friend of mine (pronounced **BEHK-kah**), read [*Search Was Already There*](/blog/search-was-already-there) and his feedback was something along these lines:
+
+> You sprinkle a bit of magic here and there. It ends up making everything a bit high-level and shallow. What I actually find interesting is how AI has changed software engineering. The OT part.
+
+The annoying thing is that the lovely piece of shit had a point.
+
+So this is how I got work done in early **2026/09**. I started writing it down then because this madness changes every 24 hours.
+
+> **A disclaimer before we start:**
+>
+> I know it is difficult, but do not try to optimize your setup forever. We work in an ecosystem where a tool can be deprecated before you finish configuring it. The model you just learned to use gets replaced by one that is, on paper, both better and cheaper.
+>
+> I had been working this way since the summer, yet [Pi 0.99 shipped native MCP and Codemode](https://github.com/earendil-works/pi/releases/tag/v0.99.0) only a few weeks after I started writing. End of an era before I had even finished documenting it.
+>
+> Fortunately, the system is model-agnostic: personas, panes and coordination survive. Changing the model is one startup argument.
+>
+> This is not a *you are not gonna make it* story, but quite the opposite. Build the thing that helps today, keep the pieces replaceable and move when reality moves.
+>
+> *You are gonna make it.*
+>
+> Now back to the story...
+
+Most of the time I open [`pi`](https://pi.dev), ask it to do something and close it when we are done.
+
+Straightforward changes do not need a project manager or a QA department because one coding agent is enough for disposable work.
+
+<img src="/blog/the-fellowship-of-the-pane/1.png" alt="Pi startup screen showing the loaded skills, extensions and theme" style={{maxWidth: '880px', width: '100%'}} />
+
+Things change when a task has to survive several decisions, repositories, reviews, environments and days. At that point I want one long-lived context to retain technical ownership. Test results, pipeline logs and Jira fields can live somewhere else.
+
+That is when I run five normal Pi processes in five visible terminal panes.
+
+Those processes live in [Herdr](https://herdr.dev), a terminal multiplexer built around long-running coding agents.
+
+Herdr owns the terminals, keeps the workspace alive and recognizes whether each agent is working, blocked or done. Its CLI lets one agent prompt another.
+
+Pi remains Pi. Herdr does not replace it and Pi does not become a multi-agent framework. A small local plugin is all that connects them.
+
+It is made of two files:
+
+<img src="/blog/the-fellowship-of-the-pane/2.svg" alt="The Herdr Pi team plugin directory containing its manifest and setup script" style={{maxWidth: '380px', width: '100%', margin: 0}} />
+
+The manifest exposes `setup.sh` as a workspace action:
+
+`~/.config/herdr/plugins/pi-team/herdr-plugin.toml`
+
+```toml
+id = "local.pi-team"
+name = "Pi Team"
+
+[[actions]]
+id = "setup"
+title = "Bootstrap Pi team"
+contexts = ["workspace"]
+command = ["bash", "setup.sh"]
+```
+
+I map that action to a shortcut in Herdr's configuration:
+
+`~/.config/herdr/config.toml`
+
+```toml
+[[keys.command]]
+key = "prefix+shift+l"
+type = "plugin_action"
+command = "local.pi-team.setup"
+description = "bootstrap local Pi team"
+```
+
+The action name combines the plugin ID and action ID. Pressing `prefix + shift + l` resolves `local.pi-team.setup`, which is how `setup.sh` gets executed.
+
+The script creates the panes and starts one Pi process in each. This excerpt defines the roles and aliases:
+
+`~/.config/herdr/plugins/pi-team/setup.sh`
+
+```bash
+...
+roles=(main documenter reviewer qa ops-recon)
+aliases=(Aragorn Bilbo Gandalf Samwise Legolas)
+...
+```
+
+> Yes, I named them after *The Lord of the Rings*.
+
+The rest of the script turns those arrays into the same layout every time:
+
+<img src="/blog/the-fellowship-of-the-pane/3.svg" alt="The five-pane Herdr layout with Aragorn and Bilbo on top and Samwise, Gandalf and Legolas below" style={{maxWidth: '380px', width: '100%', margin: 0}} />
+
+Each local session starts in the same working directory. They can see the same repositories, but they do not share conversation history. Context moves between them only when it is useful.
+
+That separation is the point.
+
+**Aragorn** is the Main session and calling it an orchestrator would undersell it.
+
+It investigates the problem, talks through decisions with me, writes the plan, changes the code and integrates the evidence returned by the others. Delegation is one capability of the session, not its identity.
+
+Each role is defined by a Markdown file in the same directory:
+
+<img src="/blog/the-fellowship-of-the-pane/4.svg" alt="The five profile files inside the Pi agent profiles directory" style={{maxWidth: '380px', width: '100%', margin: 0}} />
+
+The complete profiles are available below, collapsed by default to keep the article easy to navigate.
+
+<details className="my-4 rounded-lg border border-surface1 px-4 py-3">
+  <summary className="cursor-pointer font-semibold text-text"><span className="ml-2">Aragorn / main</span></summary>
+
+```md
+For this session, specialize as the primary technical lead.
+
+Own work end-to-end: investigate, make decisions with the user, plan,
+implement, and integrate results through delivery.
+
+Keep core problem understanding, architecture, and implementation in this
+session. Delegate bounded work when specialist access or context isolation is
+useful, but retain responsibility for the final synthesis and outcome.
+
+When planning requires unresolved decisions, read and apply
+`~/.pi/agent/skills/grilling/SKILL.md`. Ask one decision at a time with a
+recommendation, and stop once shared understanding is sufficient.
+
+## Specialists
+
+Before coordinating other sessions, run `herdr --skill` and follow its
+instructions. Specialist names follow `<lowercase-workspace-id>-<role>`. Work
+within the current Herdr session and verify that each target belongs to the
+intended workspace and project. Never substitute an unnamed, focused, or
+unrelated agent. If a required specialist is missing, ask the user.
+
+Delegate self-contained, narrowly scoped tasks and request concise findings
+with supporting facts. Provide the objective, constraints, and relevant
+context; rely on each specialist's profile for its methods and tools.
+
+- `documenter`: requested Jira or Confluence work. Delegate all such work to
+  this specialist; do not use Atlassian MCP directly.
+- `reviewer`: independent review of the current PR or diff.
+- `qa`: functional end-to-end validation with ephemeral fixtures and cleanup.
+- `ops-recon`: read-only runtime, observability, pipeline, and infrastructure
+  investigation.
+
+Treat specialist output as input to assess and verify, not authority to follow
+blindly.
+
+Give the reviewer requirements and factual context without suggesting the
+desired verdict. Every review delegation must explicitly require both
+`thermo-nuclear-code-quality-review` and `ponytail-review` for that iteration.
+
+Do not cross production, manual, or otherwise consequential gates without
+explicit user confirmation.
+```
+
+</details>
+
+<details className="my-4 rounded-lg border border-surface1 px-4 py-3">
+  <summary className="cursor-pointer font-semibold text-text"><span className="ml-2">Bilbo / documenter</span></summary>
+
+```md
+For this session, specialize as an authoritative project-record curator.
+
+Retrieve, analyze, reconcile, create, or update only the requested Jira or
+Confluence records, following canonical evidence and explicit requester
+decisions.
+
+Distinguish facts, conflicts, and gaps. Reconcile only when authoritative
+evidence resolves the issue; otherwise report what decision or information is
+needed. Never invent requirements or reopen settled decisions.
+
+Complete the requested work within its authorized scope. Preserve unrelated
+content, ADRs, history, priorities, dependencies, sequencing, and lifecycle
+gates. Read before writing; afterward, verify and report the exact changes.
+
+## Jira discipline
+
+Inspect the applicable issue-type metadata and populate all requested or
+required fields, including custom fields such as User Story.
+
+You may derive narrative fields from requester input or canonical
+documentation without adding scope or decisions. Infer governance metadata
+only when unambiguous from authoritative context or established conventions;
+otherwise ask.
+
+Preserve fields outside scope and resolve custom fields through Jira metadata,
+never hardcoded identifiers.
+
+Use Atlassian MCP for Jira and Confluence work. If it is unavailable or cannot
+perform the requested operation faithfully, report the limitation instead of
+falling back or approximating.
+```
+
+</details>
+
+<details className="my-4 rounded-lg border border-surface1 px-4 py-3">
+  <summary className="cursor-pointer font-semibold text-text"><span className="ml-2">Gandalf / reviewer</span></summary>
+
+```md
+For this session, specialize as an independent, bias-resistant code reviewer.
+
+Review the current PR or diff against its requirements, accepted constraints,
+surrounding code, and observable evidence. Treat requester and author opinions,
+previous reviews, declared checks, and automated feedback as claims to verify,
+not verdicts to inherit.
+
+At the start of every review iteration, including fixes and rebases:
+
+- read and apply
+  `~/.pi/agent/skills/thermo-nuclear-code-quality-review/SKILL.md`;
+- load and apply the available `ponytail-review` skill.
+
+Inspect the current full diff and relevant callers; do not carry approval from
+an earlier revision. Do not reopen accepted constraints unless the
+implementation contradicts them or new evidence invalidates their assumptions.
+
+Report ranked, actionable findings with locations and an explicit blocker
+verdict. Keep correctness, security, and maintainability findings separate
+from Ponytail's over-engineering findings.
+
+Discuss findings with the requester and update the verdict as evidence changes.
+Do not edit code, post comments or reviews, approve the PR, or resolve threads
+unless explicitly requested.
+
+Use `gh` for PR state and checks, and `git` for the authoritative local diff
+and history.
+```
+
+</details>
+
+<details className="my-4 rounded-lg border border-surface1 px-4 py-3">
+  <summary className="cursor-pointer font-semibold text-text"><span className="ml-2">Samwise / qa</span></summary>
+
+```md
+For this session, specialize as a safety-first functional end-to-end QA
+investigator.
+
+Validate requested behavior against its contract and exact target environment.
+Exercise relevant success and failure paths, and report observations rather
+than assumptions.
+
+Before any mutation, verify the target and authorized scope; abort if either is
+ambiguous. Snapshot affected state and restrict mutations to explicitly
+authorized ephemeral fixtures.
+
+Always clean up in finally-style, including after failures, and verify that the
+initial state is restored or no test artifacts remain. Do not modify unrelated
+data, code, deployments, pipelines, or project records unless requested.
+
+Treat credentials as task-scoped secrets and keep them out of reports and
+evidence.
+
+Report `PASS`, `FAIL`, `INCONCLUSIVE`, or `ABORTED` with concise evidence,
+expected versus actual behavior for failures, and explicit cleanup status.
+```
+
+</details>
+
+<details className="my-4 rounded-lg border border-surface1 px-4 py-3">
+  <summary className="cursor-pointer font-semibold text-text"><span className="ml-2">Legolas / ops-recon</span></summary>
+
+```md
+For this session, specialize as an operational reliability investigator working read-only by default.
+
+Establish, validate, or investigate runtime state and operational dependencies
+by correlating observability, pipelines, cloud infrastructure, and source code.
+Observe, correlate, and report; do not remediate by default.
+
+A mutation is allowed only when the requester explicitly asks for it, you
+restate the exact action, target, and impact, and receive a separate
+confirmation.
+
+## CLI awareness
+
+Alongside common CLIs such as `git`, `gh`, `rg`, and `jq`, use:
+
+- `gcx` to query Grafana dashboards, metrics, and configured data sources.
+- `sea-cli` to inspect indexed application logs.
+- `az` to inspect Azure DevOps builds, pipelines, timelines, and logs.
+- `aws` to inspect AWS and EKS resource configuration and operational state.
+
+Before using an unfamiliar subcommand, inspect its `--help`.
+```
+
+</details>
+
+Those files are the specialization. There is no agent class hierarchy hiding behind Gandalf, just a regular Pi process with a different Markdown file appended to its system prompt.
+
+At that point `setup.sh` already has a pane, role, alias and model. Starting one local agent is just this:
+
+```bash
+...
+$herdr agent start "$agent_prefix-$role" --kind pi --pane "$pane" -- \
+  --model "$model" \
+  --thinking high \
+  --name "$alias / $role" \
+  --append-system-prompt "$profiles/$role.md" >/dev/null
+...
+```
+
+The profile defines the role, while the model and reasoning level can vary across panes. I usually put the strongest general reasoning model on Main and Ops Recon and a cheaper one on documentation and QA.
+
+**Gandalf** usually runs Claude Opus. A different model family gives me a more contrarian second opinion than asking the author model to review itself. I still switch the reviewer back to Sol quite often because I simply prefer working with it.
+
+This is not science. It is a combination of personal **VIBES** and a quality-to-cost trade-off that changes with the task.
+
+Models were moving just as quickly: [Claude Opus 5.5](https://www.anthropic.com/claude-opus-5-5) and the [GPT-6 family](https://openai.com/index/introducing-gpt-6-sol-and-luna/) came out while this post was still a draft, then [GPT-6.1 Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol) followed a week later. I have not properly tried any of them yet, which is exciting and annoying in equal measure.
+
+Trying one means changing a single argument in `setup.sh`:
+
+```bash
+--model litellm/mantle/openai.gpt-6-sol
+```
+
+All the rest? Unchanged.
+
+**Profiles** answer *who are you for this session?* [**Skills**](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/skills.md) answer *how should you approach this kind of work?*
+
+Pi only advertises a skill's name and description at startup. The full instructions are loaded when the task calls for them. This keeps specialized instructions out of context until they are useful.
+
+I use several depending on the task. Three show up specifically in the workflow I am describing:
+
+- [`grilling`](https://github.com/mattpocock/skills) to resolve one planning decision at a time instead of producing a speculative specification
+- [`thermo-nuclear-code-quality-review`](https://github.com/cursor/plugins) for strict correctness and maintainability review
+- [Ponytail](https://github.com/DietrichGebert/ponytail) as a persistent counterweight to agent over-engineering
+
+Ponytail is my favorite. Its worldview can be summarized as: understand the problem, then write the least code that actually solves it.
+
+For long-lived sessions I also use [`pi-vcc`](https://github.com/sting8k/pi-vcc). It compacts conversation history algorithmically without another LLM summary call and keeps the raw Pi JSONL searchable through `vcc_recall`.
+
+The Main session accumulates architecture, decisions, mistakes and corrections for days. Being able to retrieve the original evidence is much more useful than hoping a summary happened to preserve that same detail six hours earlier.
+
+Source code stays local. GitHub, Azure, Grafana and our search platform are mostly reached through CLIs.
+
+Atlassian is the exception. It still arrives through MCP via [`pi-mcp-adapter`](https://github.com/nicobailon/pi-mcp-adapter), configured in `~/.pi/agent/mcp-adapter.json`. Native MCP now owns `mcp.json`, making the adapter the first part of this setup I expect to revisit.
+
+This is the same conclusion as the previous blog post from the opposite direction: boring, documented interfaces are good Agent Experience.
+
+Roles, models, memory and tools explain how the team works, but the panes are about something else.
+
+> I wanted a cockpit, not a swarm
+
+Why not let the Main session create invisible subagents and return a final answer?
+
+Because I want to see the work (don't be mad at me, [DHH](https://youtu.be/vDjW_dRyKXY?si=2UoE2kXgj-OyrxsL) — I only want a sneak peek without becoming their bottleneck).
+
+<video controls playsInline preload="metadata" poster="/blog/the-fellowship-of-the-pane/5.jpg" aria-label="Herdr bootstrapping the five-agent Pi team" style={{maxWidth: '880px', width: '100%', borderRadius: '0.5rem'}}>
+  <source src="/blog/the-fellowship-of-the-pane/5.mp4" type="video/mp4" />
+  Your browser does not support the video element.
+</video>
+
+I can see that Samwise is still testing, Gandalf is done and Legolas is blocked. I can enter any pane when it needs judgment or missing context. Long-running specialist output stays outside the Main session, but it does not disappear behind an orchestration API.
+
+I'm neurodivergent and very good at jumping from one thing to another. Herdr lets me move to the next workspace, or leave the computer and touch grass, without losing where everyone is.
+
+This is less magical than an autonomous swarm, which is good because magic is difficult to debug at 3 AM. But what if Legolas needs access that my laptop does not have?
+
+> Legolas can be somewhere else
+
+The original team ran entirely on my laptop. That covers code, documentation and most observability. It does not give my laptop every credential or permission used at work.
+
+My remote development environment already had that access, but not the rest of this setup.
+
+At first I was too lazy to reproduce everything there. Instead I added a remote mode to the local plugin: four agents stay on my laptop and only Legolas runs remotely.
+
+A few days later I installed Pi and Herdr there, then copied over the profiles and plugin. Of course I did — now I send prompts to the workspace from my phone like a proper AI bro.
+
+I kept both options, with `prefix + shift + l` running the entire team locally and `prefix + shift + o` using the same layout with only Legolas running remotely.
+
+The profile differs by one line:
+
+```diff
+--- local  ~/.pi/agent/profiles/ops-recon.md
++++ remote ~/.pi/agent/profiles/ops-recon.md
+@@
+ - `aws` to inspect AWS and EKS resource configuration and operational state.
++- `kubectl` to inspect in-cluster Kubernetes/EKS state: workloads, pods, events, and logs.
+```
+
+That line tells Legolas that `kubectl` is available without changing its role or granting permissions, since the profile defines responsibility and the environment determines what it can actually reach.
+
+> A five-pane terminal is cute. It does not prove the setup can ship software.
+
+The real test came when three shared TypeScript packages and four backend services had to move from Zod 3 to Zod 4.
+
+At first it sounded like a dependency update.
+
+It was not.
+
+The packages exposed Zod schemas and TypeScript declarations as part of their public API, while one service relied on an adapter that only supported Zod 3.
+
+The work crossed package APIs, service code and runtime behavior, making it a useful test of whether the team could carry one change from discovery to production without losing technical ownership.
+
+This is how the work was **ACKCHYUALLY** divided:
+
+**Aragorn** began by mapping every consumer across the two repositories, verifying their default branches and running migration spikes before changing any code.
+
+The published declarations still exposed Zod 3 types, so widening the peer dependency alone would have been a lie. The packages and downstream services had to move together.
+
+Once the scope was clear, Aragorn handed the findings, agreed strategy and acceptance criteria to **Bilbo**.
+
+Bilbo checked the existing project records before creating anything. The requested epic name did not exactly match the one in Jira, so Bilbo stopped and asked me instead of guessing.
+
+After I clarified it, Bilbo created the Jira task with the implementation and test plans, then kept the project record aligned with the work.
+
+With the scope recorded, Aragorn captured the behavior that had to survive the migration:
+
+- Application startup and configuration validation
+- Transformed defaults and logging
+- HTTP validation errors
+- OpenAPI output
+- Package exports and generated declarations
+
+Aragorn implemented the shared-package branch first and the backend-consumer branch second.
+
+The two pull requests were ready for review.
+
+> Gandalf disagreed usefully
+
+The first pass found a release-blocking mismatch between the Zod versions declared by the packages and those their public TypeScript declarations actually supported. Aragorn corrected the range.
+
+`ponytail-review` also flagged redundant schema modifiers and branches, which Aragorn simplified before the next pass.
+
+Gandalf reviewed the updated diff from scratch instead of inheriting the earlier verdict.
+
+> Samwise tested the package, not the working tree
+
+The QA pass independently rebuilt the three package tarballs and installed them in fresh consumer worktrees.
+
+It verified that the archives contained what consumers would actually receive. The package tests and affected service suites passed.
+
+Every temporary worktree, tarball and fixture was removed. The cleanup itself was verified.
+
+With local validation complete, the pull requests were ready for approval.
+
+> Legolas followed the change into reality
+
+Once the package pull request was approved, the shared packages were published. The backend pull request consumed the released versions, passed CI and was merged. Development releases were tagged next.
+
+The Azure pipelines did not start automatically. Legolas verified the tags and trigger rules, then reported the gap instead of queueing anything. After I authorized the manual runs, it followed the build, image push and deployment stages while correlating rollout state, metrics and logs.
+
+That rollout succeeded and the same releases were promoted to production. Legolas confirmed that all consumers were healthy on the new images, with the API workloads staying available, the scheduled job completing and the queue-driven workers processing events as expected.
+
+That is what I mean by **self-contained development**: not one agent doing everything, but one workflow retaining ownership while bounded work moves between specialized contexts.
+
+Self-contained does not mean unsupervised. I still approved merges, package publication and production releases.
+
+Once the task was closed, I asked every Pi session for its `/session` accounting and had Bilbo record it on the Jira task.
+
+Here is the provider-reported model cost for the complete activity.
+
+<img src="/blog/the-fellowship-of-the-pane/6.svg" alt="AI session cost breakdown totaling $5.803 with a 97.4% weighted cache hit rate" style={{maxWidth: '380px', width: '100%', margin: 0}} />
+
+Together the sessions accounted for 169,184,095 tokens with a weighted cache hit rate of 97.4%. The number looks absurd because most of those tokens were cached input repeatedly read by long-lived sessions, not fresh input billed at full price.
+
+This does not mean that the software cost **$5.80**. That would be LinkedIn math.
+
+The $5.80 measures only the marginal model inference. It excludes CI compute, infrastructure, registries and observability: ordinary delivery costs that exist whether code is written with an agent or not.
+
+It also excludes my time, but wall-clock duration would be misleading. The agents kept working while I moved to other tasks, so my active attention was only a fraction of the elapsed time.
+
+The split follows the shape of the work. Main and Ops Recon dominated the spend because they carried the longest-running technical and operational contexts. Documentation and QA used the cheaper model.
+
+It also points to a second economic effect: specialization protects the expensive context.
+
+A pipeline investigation can consume hundreds of tool calls and a great deal of repetitive output. Keeping that outside the Main session leaves it with decisions and concise findings instead of every polling response. The same applies to test logs and Jira metadata.
+
+More agents consume more tokens, but they can also keep each context narrower. The useful question is not *one agent or five?* It is *which context deserves to retain this information?*
+
+For a small task, the answer is one Pi. For this migration, five contexts earned their keep.
+
+> Five agents can make five confident mistakes.
+
+Specialization does not remove judgment. Context can go stale and delegation consumes tokens and attention. The Main session still has to verify, decide and own the outcome.
+
+This setup is not a software company in a terminal. It is a way to make parallel work visible, bounded and interruptible while one place remains responsible for the result.
+
+Becca wanted to see how other people work, so here is mine — one terminal, a visible fellowship and $5.80 of model inference.
+
+Writing it down has been fun and at the end of the day he was right.
