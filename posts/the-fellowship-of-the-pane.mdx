@@ -449,13 +449,13 @@ Once the task was closed, I asked every Pi session for its `/session` accounting
 
 Here is the provider-reported model cost for the complete activity.
 
-<img src="/blog/the-fellowship-of-the-pane/6.svg" alt="AI session cost breakdown totaling $5.803 with a 97.4% weighted cache hit rate" style={{maxWidth: '380px', width: '100%', margin: 0}} />
+<img src="/blog/the-fellowship-of-the-pane/6.svg" alt="AI session cost breakdown totaling $105.986 with a 97.4% weighted cache hit rate" style={{maxWidth: '380px', width: '100%', margin: 0}} />
 
 Together the sessions accounted for 169,184,095 tokens with a weighted cache hit rate of 97.4%. The number looks absurd because most of those tokens were cached input repeatedly read by long-lived sessions, not fresh input billed at full price.
 
-This does not mean that the software cost **$5.80**. That would be LinkedIn math.
+This does not mean that the software cost **$105.99**. That would be LinkedIn math.
 
-The $5.80 measures only the marginal model inference. It excludes CI compute, infrastructure, registries and observability: ordinary delivery costs that exist whether code is written with an agent or not.
+The $105.99 measures only the marginal model inference. It excludes CI compute, infrastructure, registries and observability: ordinary delivery costs that exist whether code is written with an agent or not.
 
 It also excludes my time, but wall-clock duration would be misleading. The agents kept working while I moved to other tasks, so my active attention was only a fraction of the elapsed time.
 
@@ -475,6 +475,6 @@ Specialization does not remove judgment. Context can go stale and delegation con
 
 This setup is not a software company in a terminal. It is a way to make parallel work visible, bounded and interruptible while one place remains responsible for the result.
 
-Becca wanted to see how other people work, so here is mine — one terminal, a visible fellowship and $5.80 of model inference.
+Becca wanted to see how other people work, so here is mine — one terminal, a visible fellowship and roughly $100 of model inference.
 
 Writing it down has been fun and at the end of the day he was right.
