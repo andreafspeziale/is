@@ -40,7 +40,7 @@
     "node": "24.x"
   },
   "overrides": {
-    "@types/react": "19.3.1",
+    "@types/react": "19.3.3",
     "@types/react-dom": "19.3.0"
   }
 }
